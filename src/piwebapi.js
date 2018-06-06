@@ -1,0 +1,306 @@
+import moment from 'moment'
+
+export default {
+install(Vue, options) {
+
+  var apiUrl = options.url
+
+  Vue.prototype.$pi = new Vue({
+
+  pathBuffer: [],
+  valueBuffer: [],
+
+  // webid cache
+  webIdCache: {},
+  // value cache, only activated for persisted objects
+  valueCache: {},
+
+  webIdMap: {},
+
+  data: function() {
+    return {
+      pathToWebIdMap: {},
+      attributeValues: {},
+      attributeChildren: {},
+      piLoading: false,
+    }
+  },
+  
+  computed: {
+    requestAttributeValues() {
+      return _.debounce(this.batchRequestAttributeValues, 5)
+    },
+    requestAttributeWebIds() {
+      return _.debounce(this.batchRequestAttributeWebIds, 5)
+    }
+  },
+
+  methods: {
+
+    getElementWebId(path) {
+      var promise = new Promise(
+        async function(resolve, reject) {
+
+          if(path in this.$options.webIdCache) {
+            resolve(this.$options.webIdCache[path])
+            return
+          }
+          // check if actual path
+          if(!_.startsWith(path, "\\\\SR")) {
+            resolve(path)
+            return
+          } 
+
+          var url = apiUrl + "/elements?selectedFields=WebId&path=" + path
+          var response = await this.$http.get(url)
+          var webId = response.body.WebId
+
+          resolve(webId)
+
+        }.bind(this)
+      )
+      return promise
+    },
+
+    getPointWebId(path) {
+
+      // return promise for WebId
+
+      var promise = new Promise(
+        async function(resolve, reject) {
+
+          // check cache
+          if(path in this.$options.webIdCache) {
+            resolve(this.$options.webIdCache[path])
+            return
+          }
+
+          // check if actual path
+          if(!_.startsWith(path.toLowerCase(), "\\\\sr")) {
+            resolve(path)
+            return 
+          } 
+
+          var url = apiUrl + "/points?selectedFields=WebId&path=" + path
+          var response = await this.$http.get(url)
+          var webId = response.body.WebId
+
+          resolve(webId)
+
+
+        }.bind(this)
+      )
+
+      return promise
+
+    },
+    getWebId(path) {
+      if(_.includes(path, "|")) {
+        return this.getAttributeWebId(path)
+      } else if(path.split("\\").length > 4) {
+        return this.getElementWebId(path)
+      } else {
+
+        return this.getPointWebId(path)
+      }
+    },
+
+    getAttributeWebId(path) {
+
+      // return promise for WebId
+      //
+      var promise = new Promise(
+        function(resolve, reject) {
+
+            // check cache
+            if(path in this.$options.webIdCache) {
+              resolve(this.$options.webIdCache[path])
+              return
+            }
+            // check if actual path
+            if(!_.startsWith(path, "\\\\SR")) {
+              resolve(path)
+              return 
+            } 
+
+            // add the attribute to the buffer
+            this.$options.pathBuffer.push(path)
+            // send debounced request for a new batch of attributes
+
+            var request = this.requestAttributeWebIds
+            request()
+            if(this.$options.pathBuffer.length > 30){
+              request.flush()
+            }
+            
+            // listen for 
+            this.$once(path+'-id', function(webid) {
+              if(webid) {
+                // store in cache
+                this.$options.webIdCache[path] = webid
+
+                resolve(webid)
+              } else {
+                reject("WebID for "+path+"not found")
+              }
+            })
+        }.bind(this)
+      )
+
+      return promise
+    },
+
+    convertTime(timestr) {
+      if(moment.isMoment(timestr)) {
+        return timestr.toISOString()
+      } else {
+        return timestr
+      }
+
+    },
+
+    getRecorded(path, start="*-1d", end="*", maxCount=10000) {
+      var promise = new Promise(
+        function(resolve, reject) {
+          this.getWebId(path).then(response => {
+            var url = apiUrl + '/streams/' + response + '/recorded?startTime='+this.convertTime(start)+'&endTime='+this.convertTime(end)+'&maxCount='+maxCount
+            this.$http.get(url).then(response => {
+              resolve(response.body.Items)
+            })
+          })
+        }.bind(this))
+      return promise
+    },
+
+    getPlot(path, start="*-1d", end="*",intervals=48) {
+      var promise = new Promise(
+        function(resolve, reject) {
+          this.getWebId(path).then(response => {
+            var url = apiUrl + '/streams/' + response + '/plot?startTime='+this.convertTime(start)+'&endTime='+this.convertTime(end)+'&intervals='+intervals
+            this.$http.get(url).then(response => {
+              resolve(response.body.Items)
+            })
+          }, error => {
+            reject(error)
+          })
+        }.bind(this))
+      return promise
+    },
+
+    getValue(path, persist=false) {
+
+      var promise = new Promise(
+        function(resolve, reject) {
+          this.getWebId(path).then(response => {
+            // check cache
+            if(persist && (path in this.$options.valueCache)) {
+              // cache hit
+              resolve(this.$options.valueCache[path])
+              return
+            }
+
+
+            if(!_.includes(this.$options.valueBuffer,response)) {
+              this.$options.valueBuffer.push(response)
+              this.$options.webIdMap[response] = path
+              var req = this.requestAttributeValues
+              req()
+              if(this.$options.valueBuffer.length > 20) {
+                req.flush()
+              }
+            }
+            this.$once(path+'-value', function(value) {
+              if(value) {
+                if(persist) {
+                  // store in cache
+                  this.$options.valueCache[path] = value
+                }
+                resolve(value)
+              } else {
+                reject(value)
+              }
+            })
+          }).catch(error => {
+            reject(error)
+          })
+
+        }.bind(this))
+
+      return promise
+    },
+
+    batchRequestAttributeValues() {
+      var url = apiUrl + "/streamsets/value?webid=" + this.$options.valueBuffer.join("&webid=")
+      // clear buffer
+      this.$options.valueBuffer = []
+      this.$http.get(url).then(response=>{
+        for(var item of response.body.Items) {
+          var path = this.$options.webIdMap[item.WebId]
+          this.$options.valueBuffer = _.without(this.$options.valueBuffer, item.WebId)
+          this.$emit(path+"-value", item.Value)
+          this.$set(this.attributeValues, this.$options.webIdMap[item.WebId], item.Value)
+        }
+      })
+
+    },
+
+    batchRequestAttributeWebIds() {
+      var url = apiUrl + "/attributes/multiple?path=" + this.$options.pathBuffer.join("&path=")
+      this.$options.pathBuffer = []
+      this.$http.get(url).then(response=>{
+        for(var item of response.body.Items) {
+          if(!item.Object) {
+            this.$emit(item.Identifier+"-id", false)
+          } else {
+            this.$options.webIdMap[item.Object.WebId] = item.Identifier
+            this.$options.pathBuffer = _.without(this.$options.pathBuffer, item.Identifier)
+            this.$emit(item.Identifier+"-id", item.Object.WebId)
+          }
+        }
+      })
+
+    },
+
+    parse(path, context = this.context) {
+      var start = path.substring(0,2)
+
+      if(start == "\\\\") {
+        return path
+      }
+      if(start == ".|" || start == ".\\") {
+        return context + path.substring(1,path.length)
+      }
+      if(start == "..") {
+        var split = context.split("\\")
+        var len = path.match(/\.\./g).length
+        var spliced = split.splice(-len, len)
+        if (_.includes(path, "|")) {
+          return split.join("\\") + path.substring(path.indexOf("|"))
+        } else {
+          return split.join("\\")
+        }
+      }
+      if(start[0] == "\\") {
+        return context.split("\\").slice(0,4).join("\\") + path
+      }
+      return this.context
+    },
+
+    getChildren(path) {
+      var promise = new Promise(async function(resolve, reject) {
+        if(path in this.$options.valueCache) {
+          resolve(this.$options.valueCache[path])
+          return
+        }
+        const webid = await this.getElementWebId(path)
+        const url = apiUrl + "/elements/"+webid+"/elements?selectedFields=Items.WebId;Items.Name;Items.Template;Items.Path"
+        const response = await this.$http.get(url)
+        this.$options.valueCache[path] = response.body.Items
+        resolve(response.body.Items)
+      }.bind(this))
+
+      return promise
+    },
+  }
+
+})}}
