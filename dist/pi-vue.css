@@ -1,4 +1,142 @@
+/*!
+ * pi-vue v0.0.0
+ * (c) 2018 Abel Heinsbroek
+ * Released under the MIT License.
+ */
 
-.test h1[data-v-18b81e91] {
-  color: #40b883;
+
+.error {
+  color: red;
 }
+
+.red {
+  background: #FF2323;
+}
+.green {
+  background: #67B23A;
+}
+.yellow {
+  background: #F6CA2A;
+}
+.orange {
+  background: #FF6C00;
+}
+.multistate .loading {
+  display: inline-block;
+  padding: 7px;
+}
+.error {
+  background: lightgray;
+}
+
+.pi-chart {
+  background: #FFF;
+  border: 1px solid #AAA;
+  position: relative;
+}
+.pi-chart .reset-zoom {
+  position: absolute;
+  right: 20px;
+  top: 20px;
+}
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.3s;
+}
+.fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
+  opacity: 0;
+}
+.pi-chart .pi-loading {
+  background-color: rgba(255, 255, 255, .9);
+  position: absolute;
+  left: 0px;
+  right: 0px;
+  top: 0px;
+  bottom: 0px;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,5 +1,8 @@
 <template>
-  <div class='chart' v-loading='loading'>
+  <div class='pi-chart'>
+    <transition name='fade'>
+      <div class='pi-loading' v-show='loading'></div>
+    </transition>
       <canvas :id='uid'></canvas>
     <!-- fake slot -->
     <slot></slot>
@@ -12,8 +15,9 @@ import Chart from 'chart.js'
 import moment from 'moment'
 import _ from 'lodash'
 
-require('../chart.trace.js')
-require('../chart.interpolate.js')
+import 'chartjs-plugin-interpolate'
+import 'chartjs-plugin-trace'
+import 'chartjs-plugin-threshold'
 
 export default {
   data() { return {
@@ -59,6 +63,14 @@ export default {
       type: Number,
       default: null
     },
+    suggestedMin: {
+      type: Number,
+      default: null
+    },
+    suggestedMax: {
+      type: Number,
+      default: null
+    },
     legend: {
       type: String,
       default: 'none'
@@ -72,16 +84,27 @@ export default {
     // set request load debounce function
 
     this.requestLoad = _.debounce(function() {
+      this.chartStart = this.start
+      this.chartEnd = this.end
       this.loading = true
+      if(this.$options.chart.tracer) {
+        this.$options.chart.tracer.reset()
+      }
       this.loadData()
     }, 10)
 
   },
   watch: {
+    start(val) {
+      this.requestLoad()
+    },
+    end(val) {
+      this.requestLoad()
+    },
     series: {
       handler: function() { this.requestLoad() },
       deep: true
-    }
+    },
   },
   mounted() {
     this.uid = Math.random().toString(32).substring(2)
@@ -137,13 +160,20 @@ export default {
        }
       }
     }
-    if(this.min != null) { options.options.scales.yAxes[0].ticks.suggestedMin = this.min }
-    if(this.max != null) { options.options.scales.yAxes[0].ticks.suggestedMax = this.max }
+    if(this.min != null) { options.options.scales.yAxes[0].ticks.min = this.min }
+    if(this.max != null) { options.options.scales.yAxes[0].ticks.max = this.max }
+    if(this.suggestedMin != null) { options.options.scales.yAxes[0].ticks.suggestedMin = this.suggestedMin }
+    if(this.suggestedMax != null) { options.options.scales.yAxes[0].ticks.suggestedMax = this.suggestedMax }
 
     this.$nextTick(function() {
       var ctx = document.getElementById(this.uid)
       this.$options.chart = new Chart(ctx, options)
     })
+  },
+  beforeDestroy() {
+    // cleanup chart
+    console.log(this.$options.chart.id)
+    this.$options.chart.destroy()
   },
 
   methods: {
@@ -164,6 +194,28 @@ export default {
         this.$options.chart.update()
       }
 
+      var data = []
+      // use a request token to check if we need to cancel this method as Promises cannot really be cancelled (yet)
+      var requestToken = Math.random()
+      this.$options.requestToken = requestToken
+
+      var requests = []
+      for(var objectId in this.series) {
+        let series = this.series[objectId]
+        let path = this.series[objectId].path
+        if(this.series[objectId].recorded) {
+          requests.push(this.$pi.getRecorded(path, this.chartStart, this.chartEnd))
+        } else {
+          requests.push(this.$pi.getPlot(path, this.chartStart, this.chartEnd, 150))
+        }
+      }
+
+      var responses = await Promise.all(requests)
+      // check local requestToken with global requesttoken, if mismatch, cancel request
+      if(requestToken != this.$options.requestToken) {
+        return
+      }
+
       for(var objectId in this.series) {
 
         let series = this.series[objectId]
@@ -172,7 +224,8 @@ export default {
 
         let path = this.series[objectId].path
 
-        let response = await this.$pi.getPlot(path, this.chartStart, this.chartEnd, 150)
+        let response = responses.shift()
+
         if(!response) {
           continue
         }
@@ -196,8 +249,7 @@ export default {
           fill: false,
           objectId: objectId,
           showLine: series.line,
-          interpolate: series.line,
-          steppedLine: series.stepped
+          interpolate: series.line
         }
 
         if(!reset) {
@@ -214,21 +266,37 @@ export default {
       this.loading = false
 
       this.$options.chart.update()
+
     }
   },
 
 }
 </script>
 <style>
-.chart {
+.pi-chart {
   background: #FFF;
   border: 1px solid #AAA;
   position: relative;
 }
-.reset-zoom {
+.pi-chart .reset-zoom {
   position: absolute;
   right: 20px;
   top: 20px;
 }
-</style>
 
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.3s;
+}
+.fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
+  opacity: 0;
+}
+
+.pi-chart .pi-loading {
+  background-color: rgba(255,255,255,0.9);
+  position: absolute;
+  left: 0px;
+  right: 0px;
+  top: 0px;
+  bottom: 0px;
+}
+</style>

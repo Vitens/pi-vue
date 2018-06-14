@@ -1,174 +1,78 @@
-# pi-vue
+# PiVue
 
-[![npm](https://img.shields.io/npm/v/pi-vue.svg) ![npm](https://img.shields.io/npm/dm/pi-vue.svg)](https://www.npmjs.com/package/pi-vue)
-[![vue2](https://img.shields.io/badge/vue-2.x-brightgreen.svg)](https://vuejs.org/)
+[![npm](https://img.shields.io/npm/v/pi-vue.svg)](https://www.npmjs.com/package/pi-vue) [![vue2](https://img.shields.io/badge/vue-2.x-brightgreen.svg)](https://vuejs.org/)
 
-A Vue.js Plugin
-
-## Table of contents
-
-- [Installation](#installation)
-- [Usage](#usage)
-- [Example](#example)
-
-# Installation
-
-```
-npm install --save pi-vue
-```
-
-## Default import
-
-Install all the components:
-
-```javascript
-import Vue from 'vue'
-import PIVue from 'pi-vue'
-
-Vue.use(PIVue)
-```
-
-Use specific components:
-
-```javascript
-import Vue from 'vue'
-import { Test } from 'pi-vue'
-
-Vue.component('test', Test)
-```
-
-**⚠️ A css file is included when importing the package. You may have to setup your bundler to embed the css in your page.**
-
-## Distribution import
-
-Install all the components:
-
-```javascript
-import 'pi-vue/dist/pi-vue.css'
-import PIVue from 'pi-vue/dist/pi-vue.common'
-
-Vue.use(PIVue)
-```
-
-Use specific components:
-
-```javascript
-import 'pi-vue/dist/pi-vue.css'
-import { Test } from 'pi-vue/dist/pi-vue.common'
-
-Vue.component('test', Test)
-```
-
-**⚠️ You may have to setup your bundler to embed the css file in your page.**
-
-## Browser
-
-```html
-<link rel="stylesheet" href="pi-vue/dist/pi-vue.css"/>
-
-<script src="vue.js"></script>
-<script src="pi-vue/dist/pi-vue.browser.js"></script>
-```
-
-The plugin should be auto-installed. If not, you can install it manually with the instructions below.
-
-Install all the components:
-
-```javascript
-Vue.use(PIVue)
-```
-
-Use specific components:
-
-```javascript
-Vue.component('test', PIVue.Test)
-```
-
-## Source import
-
-Install all the components:
-
-```javascript
-import Vue from 'vue'
-import PIVue from 'pi-vue/src'
-
-Vue.use(PIVue)
-```
-
-Use specific components:
-
-```javascript
-import Vue from 'vue'
-import { Test } from 'pi-vue/src'
-
-Vue.component('test', Test)
-```
-
-**⚠️ You need to configure your bundler to compile `.vue` files.** More info [in the official documentation](https://vuejs.org/v2/guide/single-file-components.html).
-
-# Usage
-
-> TODO
-
-# Example
-
-> TODO
-
----
-
-# Plugin Development
+> A Vue.js Plugin
 
 ## Installation
 
-The first time you create or clone your plugin, you need to install the default dependencies:
-
-```
-npm install
+```bash
+npm install --save pi-vue
 ```
 
-## Watch and compile
+## Usage
 
-This will run webpack in watching mode and output the compiled files in the `dist` folder.
+### Bundler (Webpack, Rollup)
 
+```js
+import Vue from 'vue'
+import PiVue from 'pi-vue'
+// You need a specific loader for CSS files like https://github.com/webpack/css-loader
+import 'pi-vue/dist/pi-vue.css'
+
+Vue.use(PiVue)
 ```
+
+### Browser
+
+```html
+<!-- Include after Vue -->
+<!-- Local files -->
+<link rel="stylesheet" href="pi-vue/dist/pi-vue.css"></link>
+<script src="pi-vue/dist/pi-vue.js"></script>
+
+<!-- From CDN -->
+<link rel="stylesheet" href="https://unpkg.com/pi-vue/dist/pi-vue.css"></link>
+<script src="https://unpkg.com/pi-vue"></script>
+```
+
+## Development
+
+### Launch visual tests
+
+```bash
 npm run dev
 ```
 
-## Use it in another project
+### Launch Karma with coverage
 
-While developping, you can follow the install instructions of your plugin and link it into the project that uses it.
-
-In the plugin folder:
-
-```
-npm link
+```bash
+npm run dev:coverage
 ```
 
-In the other project folder:
+### Build
 
-```
-npm link pi-vue
-```
+Bundle the js and css of to the `dist` folder:
 
-This will install it in the dependencies as a symlink, so that it gets any modifications made to the plugin.
-
-## Publish to npm
-
-You may have to login to npm before, with `npm adduser`. The plugin will be built in production mode before getting published on npm.
-
-```
-npm publish
-```
-
-## Manual build
-
-This will build the plugin into the `dist` folder in production mode.
-
-```
+```bash
 npm run build
 ```
 
----
+
+## Publishing
+
+The `prepublish` hook will ensure dist files are created before publishing. This
+way you don't need to commit them in your repository.
+
+```bash
+# Bump the version first
+# It'll also commit it and create a tag
+npm version
+# Push the bumped package and tags
+git push --follow-tags
+# Ship it 🚀
+npm publish
+```
 
 ## License
 

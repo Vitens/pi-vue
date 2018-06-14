@@ -1,9 +1,16 @@
 import moment from 'moment'
 
+var ES6Promise = require("es6-promise")
+ES6Promise.polyfill()
+
+import axios from 'axios'
+
 export default {
 install(Vue, options) {
 
   var apiUrl = options.url
+
+  Vue.prototype.$http = axios
 
   Vue.prototype.$pi = new Vue({
 
@@ -53,7 +60,7 @@ install(Vue, options) {
 
           var url = apiUrl + "/elements?selectedFields=WebId&path=" + path
           var response = await this.$http.get(url)
-          var webId = response.body.WebId
+          var webId = response.data.WebId
 
           resolve(webId)
 
@@ -83,7 +90,7 @@ install(Vue, options) {
 
           var url = apiUrl + "/points?selectedFields=WebId&path=" + path
           var response = await this.$http.get(url)
-          var webId = response.body.WebId
+          var webId = response.data.WebId
 
           resolve(webId)
 
@@ -165,7 +172,7 @@ install(Vue, options) {
           this.getWebId(path).then(response => {
             var url = apiUrl + '/streams/' + response + '/recorded?startTime='+this.convertTime(start)+'&endTime='+this.convertTime(end)+'&maxCount='+maxCount
             this.$http.get(url).then(response => {
-              resolve(response.body.Items)
+              resolve(response.data.Items)
             })
           })
         }.bind(this))
@@ -176,9 +183,9 @@ install(Vue, options) {
       var promise = new Promise(
         function(resolve, reject) {
           this.getWebId(path).then(response => {
-            var url = apiUrl + '/streams/' + response + '/plot?startTime='+this.convertTime(start)+'&endTime='+this.convertTime(end)+'&intervals='+intervals
+            var url = apiUrl + '/streams/' + response + '/plot?startTime='+this.convertTime(start)+'&endTime='+this.convertTime(end)+'&intervals='+intervals + "&_random=" + Math.random()
             this.$http.get(url).then(response => {
-              resolve(response.body.Items)
+              resolve(response.data.Items)
             })
           }, error => {
             reject(error)
@@ -234,7 +241,7 @@ install(Vue, options) {
       // clear buffer
       this.$options.valueBuffer = []
       this.$http.get(url).then(response=>{
-        for(var item of response.body.Items) {
+        for(var item of response.data.Items) {
           var path = this.$options.webIdMap[item.WebId]
           this.$options.valueBuffer = _.without(this.$options.valueBuffer, item.WebId)
           this.$emit(path+"-value", item.Value)
@@ -248,7 +255,7 @@ install(Vue, options) {
       var url = apiUrl + "/attributes/multiple?path=" + this.$options.pathBuffer.join("&path=")
       this.$options.pathBuffer = []
       this.$http.get(url).then(response=>{
-        for(var item of response.body.Items) {
+        for(var item of response.data.Items) {
           if(!item.Object) {
             this.$emit(item.Identifier+"-id", false)
           } else {
@@ -295,8 +302,8 @@ install(Vue, options) {
         const webid = await this.getElementWebId(path)
         const url = apiUrl + "/elements/"+webid+"/elements?selectedFields=Items.WebId;Items.Name;Items.Template;Items.Path"
         const response = await this.$http.get(url)
-        this.$options.valueCache[path] = response.body.Items
-        resolve(response.body.Items)
+        this.$options.valueCache[path] = response.data.Items
+        resolve(response.data.Items)
       }.bind(this))
 
       return promise

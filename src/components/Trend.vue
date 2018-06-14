@@ -14,7 +14,7 @@ export default {
     },
     color: {
       type: String,
-      default: 'auto'
+      default: '#33F'
     },
     width: {
       type: Number,
@@ -43,6 +43,10 @@ export default {
     stepped: {
       type: Boolean,
       default: false
+    },
+    recorded: {
+      type: Boolean,
+      default: false
     }
   },
   computed: {
@@ -63,6 +67,7 @@ export default {
       markersize: this.marker == 'none' ? 0 : this.markerSize,
       interpolate: !this.line,
       line: this.line,
+      recorded: this.recorded,
       stepped: this.stepped
     }}
   },

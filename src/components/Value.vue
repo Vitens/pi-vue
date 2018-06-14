@@ -20,13 +20,15 @@ export default {
   data() {
     return {
       error: '',
+      loading: true
     }
   },
   asyncComputed: {
     async value() {
         try {
+          this.loading = true
           this.error = ''
-          this.value = {Value: '', loading: true}
+          this.value = {Value: ''}
           var path = ''
           if(this.context == '') {
             path = this.$pi.parse(this.path, this.$parent.context)
@@ -37,9 +39,11 @@ export default {
           if(!value.Good) {
             value.Value = 'No Data'
           }
+          this.loading = false
           return value
         } catch(e) {
           this.error = e
+          this.loading = false
           console.log(e)
           return {}
         }
@@ -47,9 +51,6 @@ export default {
   },
 
   computed: {
-    loading() {
-      return this.value.loading == true
-    },
     formattedValue() {
       if(isNaN(this.value.Value) || this.value.Value == "") {
         return this.value.Value
