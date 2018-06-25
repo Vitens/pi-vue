@@ -4,4 +4,4 @@
  * Released under the MIT License.
  */
 
-.error{color:red}.value{color:green!important;font-size:50px!important}.red{background:#ff2323}.green{background:#67b23a}.yellow{background:#f6ca2a}.orange{background:#ff6c00}.multistate .loading{display:inline-block;padding:7px}.error{background:#d3d3d3}.pi-chart{background:#fff;border:1px solid #aaa;position:relative}.pi-chart .reset-zoom{position:absolute;right:20px;top:20px}.fade-enter-active,.fade-leave-active{transition:opacity .3s}.fade-enter,.fade-leave-to{opacity:0}.pi-chart .pi-loading{background-color:hsla(0,0%,100%,.9);position:absolute;left:0;right:0;top:0;bottom:0}
+.error{color:red}.red{background:#ff2323}.green{background:#67b23a}.yellow{background:#f6ca2a}.orange{background:#ff6c00}.multistate .loading{display:inline-block;padding:7px}.error{background:#d3d3d3}.pi-chart{background:#fff;border:1px solid #aaa;position:relative}.pi-chart .reset-zoom{position:absolute;right:20px;top:20px}.fade-enter-active,.fade-leave-active{transition:opacity .3s}.fade-enter,.fade-leave-to{opacity:0}.pi-chart .pi-loading{background-color:hsla(0,0%,100%,.9);position:absolute;left:0;right:0;top:0;bottom:0}

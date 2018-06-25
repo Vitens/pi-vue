@@ -2,11 +2,11 @@
 </template>
 <script>
 export default {
-  name: 'trend',
+  name: 'threshold',
   props: {
-    label: {
-      type: String,
-      default: ''
+    value: {
+      type: Number,
+      default: null
     },
     path: {
       type: String,
@@ -16,33 +16,9 @@ export default {
       type: String,
       default: '#33F'
     },
-    width: {
-      type: Number,
-      default: 2
-    },
-    marker: {
+    mode: {
       type: String,
-      default: 'none'
-    },
-    markerSize: {
-      type: Number,
-      default: 2
-    },
-    context: {
-      type: String,
-      default: ''
-    },
-    stepped: {
-      type: Boolean,
-      default: false
-    },
-    line: {
-      type: Boolean,
-      default: true
-    },
-    recorded: {
-      type: Boolean,
-      default: false
+      default: 'ge'
     }
   },
   computed: {
@@ -56,17 +32,11 @@ export default {
 
     data () {
       return {
-        type: 'trend',
-        label: this.label,
+        type: 'threshold',
+        value: this.value,
         path: this.pipath,
         color: this.color,
-        width: this.width,
-        marker: this.marker,
-        markersize: this.marker == 'none' ? 0 : this.markerSize,
-        interpolate: !this.line,
-        line: this.line,
-        recorded: this.recorded,
-        stepped: this.stepped
+        mode: this.mode
       }
     }
   },

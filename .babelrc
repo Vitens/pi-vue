@@ -1,6 +1,18 @@
 {
   "presets": [
-    ["es2015", { "modules": false }],
-    "stage-0"
-  ]
+    [
+      "env",
+    ]
+  ],
+  "plugins": [
+    "transform-runtime",
+    "transform-object-rest-spread"
+  ],
+  "env": {
+    "test": {
+      "plugins": [
+        "istanbul"
+      ]
+    }
+  }
 }

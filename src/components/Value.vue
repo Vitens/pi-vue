@@ -11,61 +11,68 @@
 export default {
   name: 'value',
   props: {
-    path: {default: '', type: String},
-    context: {default: '', type: String},
-    units: {default: '', type: String},
-    precision: {default: 2, type: Number},
-    static: Boolean,
+    path: { default: '', type: String },
+    context: { default: '', type: String },
+    units: { default: '', type: String },
+    precision: { default: 2, type: Number },
+    static: Boolean
   },
-  data() {
+  data () {
     return {
       error: '',
-      loading: true
+      loading: true,
+      value: {
+        Value: ''
+      }
     }
   },
   asyncComputed: {
-    async value() {
-        try {
-          this.loading = true
-          this.error = ''
-          this.value = {Value: ''}
-          var path = ''
-          if(this.context == '') {
-            path = this.$pi.parse(this.path, this.$parent.context)
-          } else {
-            path = this.$pi.parse(this.path, this.context)
-          }
-          var value = await this.$pi.getValue(path, this.static)
-          if(!value.Good) {
-            value.Value = 'No Data'
-          }
-          this.loading = false
-          return value
-        } catch(e) {
-          this.error = e
-          this.loading = false
-          console.log(e)
-          return {}
+    async value () {
+      try {
+        this.loading = true
+        this.error = ''
+        this.value = { Value: '' }
+        var path = ''
+        if (this.context == '') {
+          path = this.$pi.parse(this.path, this.$parent.context)
+        } else {
+          path = this.$pi.parse(this.path, this.context)
         }
-    },
+        var value = await this.$pi.getValue(path, this.static)
+        if (!value.Good) {
+          value.Value = 'No Data'
+        }
+        this.loading = false
+        return value
+      } catch (e) {
+        this.error = e
+        this.loading = false
+        console.log(e)
+        return {}
+      }
+    }
   },
 
   computed: {
-    formattedValue() {
-      if(isNaN(this.value.Value) || this.value.Value == "") {
+    formattedValue () {
+      if (!this.value) {
+        return ''
+      }
+
+      if (isNaN(this.value.Value) || this.value.Value == '') {
         return this.value.Value
       } else {
         return this.value.Value.toFixed(this.precision)
       }
     },
-    displayUnits() {
-      if(this.units == "auto") {
+    displayUnits () {
+      if (this.units == 'auto') {
         return this.value.UnitsAbbreviation
       } else {
         return this.units
       }
     }
-  },
+  }
 }
 </script>
 <style>

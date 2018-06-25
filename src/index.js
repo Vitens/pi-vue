@@ -2,6 +2,7 @@ import Value from './components/Value.vue'
 import Multistate from './components/Multistate.vue'
 import Chart from './components/Chart.vue'
 import Trend from './components/Trend.vue'
+import Threshold from './components/Threshold.vue'
 
 import PIWebAPI from './piwebapi.js'
 
@@ -42,6 +43,7 @@ export function install (Vue, options) {
   Vue.component('pi-value', Value)
   Vue.component('pi-multistate', Multistate)
   Vue.component('pi-trend', Trend)
+  Vue.component('pi-threshold', Threshold)
   Vue.component('pi-chart', Chart)
   /* -- Add more components here -- */
 }
