@@ -67,7 +67,11 @@ export default {
     },
     displayUnits () {
       if (this.units == 'auto') {
-        return this.value.UnitsAbbreviation
+        if(this.value && this.value.UnitsAbbreviation) {
+          return this.value.UnitsAbbreviation
+        } else {
+          return ''
+        }
       } else {
         return this.units
       }

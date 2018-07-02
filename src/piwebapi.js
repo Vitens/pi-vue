@@ -200,6 +200,7 @@ export default {
               resolve(response.data.Items)
             })
           }, error => {
+            resolve([])
             reject(error)
           })
         }.bind(this))

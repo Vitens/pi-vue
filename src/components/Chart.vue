@@ -19,7 +19,6 @@ import _ from 'lodash'
 import 'chartjs-plugin-interpolate'
 import 'chartjs-plugin-trace'
 import 'chartjs-plugin-threshold'
-import 'chartjs-plugin-export'
 
 export default {
   data () {

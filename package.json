@@ -1,6 +1,6 @@
 {
   "name": "pi-vue",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "A Vue.js Plugin",
   "author": "Abel Heinsbroek <mail@abelheinsbroek.nl>",
   "main": "dist/pi-vue.common.js",
