@@ -184,7 +184,6 @@ export default {
       }
     }
 
-
     this.$nextTick(function () {
       var ctx = document.getElementById(this.uid)
       this.$options.chart = new Chart(ctx, options)
@@ -224,23 +223,23 @@ export default {
 
       this.$options.chart.stop()
 
-      if(this.min != null) {
+      if (this.min != null) {
         this.$options.chart.options.scales.yAxes[0].ticks.min = this.min
       } else {
         delete this.$options.chart.options.scales.yAxes[0].ticks.min
       }
-      if(this.max != null) {
+      if (this.max != null) {
         this.$options.chart.options.scales.yAxes[0].ticks.max = this.max
       } else {
         delete this.$options.chart.options.scales.yAxes[0].ticks.max
       }
-      if(this.suggestedMin != null) {
+      if (this.suggestedMin != null) {
         this.$options.chart.options.scales.yAxes[0].ticks.suggestedMin = this.suggestedMin
       } else {
         delete this.$options.chart.options.scales.yAxes[0].ticks.suggestedMin
       }
 
-      if(this.suggestedMax != null) {
+      if (this.suggestedMax != null) {
         this.$options.chart.options.scales.yAxes[0].ticks.suggestedMax = this.suggestedMax
       } else {
         delete this.$options.chart.options.scales.yAxes[0].ticks.suggestedMax
@@ -259,11 +258,10 @@ export default {
       // set title
       this.$options.chart.options.title.display = this.title != ''
       this.$options.chart.options.title.text = this.title
-      
+
       // set ylabel
       this.$options.chart.options.scales.yAxes[0].scaleLabel.display = this.yLabel != ''
       this.$options.chart.options.scales.yAxes[0].scaleLabel.labelString = this.yLabel
-
 
       // load thresholds
       for (var thresholdId in this.components.thresholds) {

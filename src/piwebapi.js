@@ -287,13 +287,13 @@ export default {
             return context + path.substring(1, path.length)
           }
           if (start === '..') {
-            var split = context.split("\\")
+            var split = context.split('\\')
             var len = path.match(/\.\./g).length
             var spliced = split.splice(-len, len)
-            if (_.includes(path, "|")) {
-              return split.join("\\") + path.substring(path.indexOf("|"))
+            if (_.includes(path, '|')) {
+              return split.join('\\') + path.substring(path.indexOf('|'))
             } else {
-              return split.join("\\")
+              return split.join('\\')
             }
           }
           if (start[0] === '\\') {
@@ -304,7 +304,7 @@ export default {
 
         getChildren (path) {
           var promise = new Promise(async function (resolve, reject) {
-            var cachePath = path+"-children"
+            var cachePath = path + '-children'
             if (cachePath in this.$options.valueCache) {
               resolve(this.$options.valueCache[cachePath])
               return
@@ -320,7 +320,7 @@ export default {
         },
 
         getAttributes (path, fields) {
-          var cachePath = path+"-attributes"
+          var cachePath = path + '-attributes'
           var promise = new Promise(async function (resolve, reject) {
             if (cachePath in this.$options.valueCache) {
               resolve(this.$options.valueCache[cachePath])
@@ -336,13 +336,11 @@ export default {
           return promise
         },
 
-        getParents(path) {
-          var promise = new Promise(async function(resolve, reject) {
-
+        getParents (path) {
+          var promise = new Promise(async function (resolve, reject) {
             const webId = await this.getElementWebId(path)
 
-
-            var url = apiUrl + '/elements/'+webId
+            var url = apiUrl + '/elements/' + webId
             var element = await this.$http.get(url)
 
             element = element.data
@@ -352,7 +350,7 @@ export default {
             var stop = false
             var i = 0
 
-            while(element.Links.Parent) {
+            while (element.Links.Parent) {
               var request = await this.$http.get(element.Links.Parent)
               element = request.data
               response.unshift(element)
@@ -361,7 +359,7 @@ export default {
             resolve(response)
           }.bind(this))
           return promise
-        },
+        }
       }
 
     })

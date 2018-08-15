@@ -10,44 +10,46 @@
 export default {
   name: 'value',
   props: {
-    path: {default: '', type: String},
-    context: {default: '', type: String},
-    colors: {default: () => [[1,'green'],[2, 'yellow'],[3, 'orange'],[4,'red']], type: Array}
+    path: { default: '', type: String },
+    context: { default: '', type: String },
+    colors: { default: () => [[1, 'green'], [2, 'yellow'], [3, 'orange'], [4, 'red']], type: Array }
   },
-  data() { return {
-    loading: true,
-    stateClass: ''
-  }},
+  data () {
+    return {
+      loading: true,
+      stateClass: ''
+    }
+  },
   asyncComputed: {
-    async calcClass() {
+    async calcClass () {
       this.loading = true
       this.stateClass = ''
       var path = this.$pi.parse(this.path, this.context)
       try {
         var value = await this.$pi.getValue(path, true)
 
-        for(var rule of this.colors) {
-          if(value.Value === true || value.Value === false) {
-            if(value.Value === rule[0]) {
+        for (var rule of this.colors) {
+          if (value.Value === true || value.Value === false) {
+            if (value.Value === rule[0]) {
               console.log(value.Value, rule[0], rule[1])
-              this.stateClass = rule[1] 
-              break;
+              this.stateClass = rule[1]
+              break
             }
           } else {
-            if(value.Value <= rule[0]) { 
-              this.stateClass = rule[1] 
+            if (value.Value <= rule[0]) {
+              this.stateClass = rule[1]
               break
             }
           }
         }
         this.loading = false
-      } catch(e) {
+      } catch (e) {
         this.loading = false
         console.log(e)
         this.stateClass = 'error'
       }
-    },
-  },
+    }
+  }
 }
 </script>
 <style>
