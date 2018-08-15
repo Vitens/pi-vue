@@ -27,10 +27,18 @@ export default {
         var value = await this.$pi.getValue(path, true)
 
         for(var rule of this.colors) {
-          if(value.Value <= rule[0]) { 
-            this.stateClass = rule[1] 
-            break
-          } 
+          if(value.Value === true || value.Value === false) {
+            if(value.Value === rule[0]) {
+              console.log(value.Value, rule[0], rule[1])
+              this.stateClass = rule[1] 
+              break;
+            }
+          } else {
+            if(value.Value <= rule[0]) { 
+              this.stateClass = rule[1] 
+              break
+            }
+          }
         }
         this.loading = false
       } catch(e) {

@@ -12,6 +12,7 @@ export default {
   name: 'value',
   props: {
     path: { default: '', type: String },
+    webid: { default: '', type: String },
     context: { default: '', type: String },
     units: { default: '', type: String },
     precision: { default: 2, type: Number },
@@ -33,11 +34,23 @@ export default {
         this.error = ''
         this.value = { Value: '' }
         var path = ''
+        /*
+        if(this.webId == '') {
+          if (this.context == '') {
+            path = this.$pi.parse(this.path, this.$parent.context)
+          } else {
+            path = this.$pi.parse(this.path, this.context)
+          }
+        } else {
+          path = this.webid
+        }
+        */
         if (this.context == '') {
           path = this.$pi.parse(this.path, this.$parent.context)
         } else {
           path = this.$pi.parse(this.path, this.context)
         }
+
         var value = await this.$pi.getValue(path, this.static)
         if (!value.Good) {
           value.Value = 'No Data'
@@ -62,12 +75,12 @@ export default {
       if (isNaN(this.value.Value) || this.value.Value == '') {
         return this.value.Value
       } else {
-        return this.value.Value.toFixed(this.precision)
+        return parseFloat(this.value.Value).toFixed(this.precision)
       }
     },
     displayUnits () {
       if (this.units == 'auto') {
-        if(this.value && this.value.UnitsAbbreviation) {
+        if (this.value && this.value.UnitsAbbreviation) {
           return this.value.UnitsAbbreviation
         } else {
           return ''

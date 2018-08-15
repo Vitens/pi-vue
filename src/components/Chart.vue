@@ -11,13 +11,12 @@
 <script>
 
 import Chart from 'chart.js'
-// import Hammer from 'hammerjs'
 
-import moment from 'moment'
 import _ from 'lodash'
 
 import 'chartjs-plugin-interpolate'
 import 'chartjs-plugin-trace'
+import 'chartjs-plugin-export'
 import 'chartjs-plugin-threshold'
 
 export default {
@@ -56,6 +55,10 @@ export default {
       default: true
     },
     title: {
+      type: String,
+      default: ''
+    },
+    yLabel: {
       type: String,
       default: ''
     },
@@ -104,6 +107,14 @@ export default {
     },
     end (val) {
       this.requestLoad()
+    },
+    min (val) {
+      this.$options.chart.options.scales.yAxes[0].ticks.min = val
+      this.$options.chart.update()
+    },
+    max (val) {
+      this.$options.chart.options.scales.yAxes[0].ticks.max = val
+      this.$options.chart.update()
     },
     components: {
       handler: function () { this.requestLoad() },
@@ -173,10 +184,6 @@ export default {
       }
     }
 
-    if (this.min != null) { options.options.scales.yAxes[0].ticks.min = this.min }
-    if (this.max != null) { options.options.scales.yAxes[0].ticks.max = this.max }
-    if (this.suggestedMin != null) { options.options.scales.yAxes[0].ticks.suggestedMin = this.suggestedMin }
-    if (this.suggestedMax != null) { options.options.scales.yAxes[0].ticks.suggestedMax = this.suggestedMax }
 
     this.$nextTick(function () {
       var ctx = document.getElementById(this.uid)
@@ -217,6 +224,28 @@ export default {
 
       this.$options.chart.stop()
 
+      if(this.min != null) {
+        this.$options.chart.options.scales.yAxes[0].ticks.min = this.min
+      } else {
+        delete this.$options.chart.options.scales.yAxes[0].ticks.min
+      }
+      if(this.max != null) {
+        this.$options.chart.options.scales.yAxes[0].ticks.max = this.max
+      } else {
+        delete this.$options.chart.options.scales.yAxes[0].ticks.max
+      }
+      if(this.suggestedMin != null) {
+        this.$options.chart.options.scales.yAxes[0].ticks.suggestedMin = this.suggestedMin
+      } else {
+        delete this.$options.chart.options.scales.yAxes[0].ticks.suggestedMin
+      }
+
+      if(this.suggestedMax != null) {
+        this.$options.chart.options.scales.yAxes[0].ticks.suggestedMax = this.suggestedMax
+      } else {
+        delete this.$options.chart.options.scales.yAxes[0].ticks.suggestedMax
+      }
+
       if (reset) {
         this.$options.chart.data.datasets = []
         this.$options.chart.options.threshold = []
@@ -226,6 +255,15 @@ export default {
       // set scale
       this.$options.chart.options.scales.xAxes[0].time.min = this.$pi.parseTime(this.chartStart)
       this.$options.chart.options.scales.xAxes[0].time.max = this.$pi.parseTime(this.chartEnd)
+
+      // set title
+      this.$options.chart.options.title.display = this.title != ''
+      this.$options.chart.options.title.text = this.title
+      
+      // set ylabel
+      this.$options.chart.options.scales.yAxes[0].scaleLabel.display = this.yLabel != ''
+      this.$options.chart.options.scales.yAxes[0].scaleLabel.labelString = this.yLabel
+
 
       // load thresholds
       for (var thresholdId in this.components.thresholds) {
@@ -336,4 +374,74 @@ export default {
   top: 0px;
   bottom: 0px;
 }
+
+.pi-chart .chart-options {
+  position: absolute;
+  right: 2px;
+  top: 2px;
+  border: none;
+  background: transparent;
+  padding: 2px 5px;
+  margin: 0px;
+  cursor: pointer;
+}
+.pi-chart .chart-options div {
+  width: 12px;
+  height: 2px;
+  background: #999;
+  margin: 2px 0px;
+}
+
+.pi-chart .chart-options:hover div {
+  background: #000;
+}
+
+.pi-chart .chart-options-menu {
+  position: absolute;
+  top: 22px;
+  right: 5px;
+  background: white;
+  border: 1px solid #999;
+  box-shadow: 2px 2px 4px #AAA;
+  padding: 0px;
+  margin: 0px;
+  min-width: 150px;
+  display: none;
+}
+.pi-chart .chart-options-menu.visible {
+  display: block;
+}
+.pi-chart .chart-options-menu li {
+  font-size: 13px;
+  list-style-type: none;
+  margin: 5px 0px;
+  color: #333;
+}
+
+.pi-chart .chart-options-menu li:hover {
+  background: #409EFE;
+}
+
+.pi-chart .chart-options-menu li a {
+  width: 100%;
+  display: inline-block;
+  padding: 5px 10px;
+  color: #333;
+  text-decoration: none;
+  cursor: pointer;
+}
+.pi-chart .chart-options-menu li a:hover {
+  color: white;
+}
+.pi-chart.fullscreen {
+  top: 0px;
+  left: 0px;
+  right: 0px;
+  bottom: 0px;
+
+  position: fixed;
+  z-index: 100000;
+}
+
+
 </style>

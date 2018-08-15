@@ -51,7 +51,7 @@ export default {
             return
           }
           // check if actual path
-          if (!_.startsWith(path, '\\\\SR')) {
+          if (!_.startsWith(path, '\\\\')) {
             resolve(path)
             return
           }
@@ -105,6 +105,7 @@ export default {
 
         getAttributeWebId (path) {
       // return promise for WebId
+          // insert client side webid generation please
       //
           var promise = new Promise(
         function (resolve, reject) {
@@ -114,7 +115,7 @@ export default {
             return
           }
             // check if actual path
-          if (!_.startsWith(path, '\\\\SR')) {
+          if (!_.startsWith(path, '\\\\')) {
             resolve(path)
             return
           }
@@ -279,23 +280,23 @@ export default {
         parse (path, context = this.context) {
           var start = path.substring(0, 2)
 
-          if (start == '\\\\') {
+          if (start === '\\\\') {
             return path
           }
-          if (start == '.|' || start == '.\\') {
+          if (start === '.|' || start === '.\\') {
             return context + path.substring(1, path.length)
           }
-          if (start == '..') {
-            var split = context.split('\\')
+          if (start === '..') {
+            var split = context.split("\\")
             var len = path.match(/\.\./g).length
             var spliced = split.splice(-len, len)
-            if (_.includes(path, '|')) {
-              return split.join('\\') + path.substring(path.indexOf('|'))
+            if (_.includes(path, "|")) {
+              return split.join("\\") + path.substring(path.indexOf("|"))
             } else {
-              return split.join('\\')
+              return split.join("\\")
             }
           }
-          if (start[0] == '\\') {
+          if (start[0] === '\\') {
             return context.split('\\').slice(0, 4).join('\\') + path
           }
           return this.context
@@ -303,19 +304,64 @@ export default {
 
         getChildren (path) {
           var promise = new Promise(async function (resolve, reject) {
-            if (path in this.$options.valueCache) {
-              resolve(this.$options.valueCache[path])
+            var cachePath = path+"-children"
+            if (cachePath in this.$options.valueCache) {
+              resolve(this.$options.valueCache[cachePath])
               return
             }
             const webid = await this.getElementWebId(path)
-            const url = apiUrl + '/elements/' + webid + '/elements?selectedFields=Items.WebId;Items.Name;Items.Template;Items.Path'
+            const url = apiUrl + '/elements/' + webid + '/elements?selectedFields=Items.WebId;Items.Name;Items.TemplateName;Items.Path;Items.HasChildren;'
             const response = await this.$http.get(url)
-            this.$options.valueCache[path] = response.data.Items
+            this.$options.valueCache[cachePath] = response.data.Items
             resolve(response.data.Items)
           }.bind(this))
 
           return promise
-        }
+        },
+
+        getAttributes (path, fields) {
+          var cachePath = path+"-attributes"
+          var promise = new Promise(async function (resolve, reject) {
+            if (cachePath in this.$options.valueCache) {
+              resolve(this.$options.valueCache[cachePath])
+              return
+            }
+            const webid = await this.getElementWebId(path)
+            const url = apiUrl + '/elements/' + webid + '/attributes?selectedFields=Items.WebId;Items.Name;Items.TemplateName;Items.Path;Items.HasChildren;' + fields
+            const response = await this.$http.get(url)
+            this.$options.valueCache[cachePath] = response.data.Items
+            resolve(response.data.Items)
+          }.bind(this))
+
+          return promise
+        },
+
+        getParents(path) {
+          var promise = new Promise(async function(resolve, reject) {
+
+            const webId = await this.getElementWebId(path)
+
+
+            var url = apiUrl + '/elements/'+webId
+            var element = await this.$http.get(url)
+
+            element = element.data
+
+            var response = [element]
+
+            var stop = false
+            var i = 0
+
+            while(element.Links.Parent) {
+              var request = await this.$http.get(element.Links.Parent)
+              element = request.data
+              response.unshift(element)
+            }
+
+            resolve(response)
+          }.bind(this))
+          return promise
+        },
       }
 
     })
