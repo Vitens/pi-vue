@@ -1,3 +1,9 @@
+<p align="center">
+  <a href="https://vitens.github.io/pi-vue" target="_blank">
+    <img width="280" src="https://raw.githubusercontent.com/vitens/pi-vue/master/docs-src/.vuepress/public/hero.png" alt="logo">
+  </a>
+</p>
+
 # PiVue
 
 [![npm](https://img.shields.io/npm/v/pi-vue.svg)](https://www.npmjs.com/package/pi-vue) [![vue2](https://img.shields.io/badge/vue-2.x-brightgreen.svg)](https://vuejs.org/)
