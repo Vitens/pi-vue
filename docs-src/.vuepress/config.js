@@ -1,5 +1,7 @@
 module.exports = {
   title: 'PIVue',
+  base: '/pi-vue/',
+  dest: 'docs',
   description: 'Harness the power of the Osisoft PI system and the Vue framework to build amazing dashboards and applications',
   themeConfig: {
     nav: [
@@ -8,7 +10,6 @@ module.exports = {
     ],
 
     repo: 'vitens/pi-vue',
-    base: '/pi-vue/',
     displayAllHeaders: true,
     sidebar: [{
       title: 'Guide',

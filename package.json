@@ -30,8 +30,8 @@
     "test": "cross-env BABEL_ENV=test karma start test/karma.conf.js --single-run",
     "dev": "webpack-dashboard -- webpack-dev-server --config build/webpack.config.dev.js --open",
     "dev:coverage": "cross-env BABEL_ENV=test karma start test/karma.conf.js",
-    "docs:build": "vuepress build docs",
-    "docs:dev": "vuepress dev docs"
+    "docs:build": "vuepress build docs-src",
+    "docs:dev": "vuepress dev docs-src"
   },
   "lint-staged": {
     "*.{vue,jsx,js}": [

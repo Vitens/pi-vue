@@ -12,7 +12,6 @@ import axios from 'axios'
 
 import _ from 'lodash'
 
-
 function assign (target, source) { // eslint-disable-line no-unused-vars
   for (var index = 1, key, src; index < arguments.length; ++index) {
     src = arguments[index]
@@ -38,13 +37,13 @@ export function install (Vue, options) {
   axios.defaults.headers.common['Authorization'] = options['auth_header']
 
   const VueLodash = {
-    install(Vue) {
+    install (Vue) {
       // prevent duplicate instance on SSR
       if (!Vue.prototype._) {
-        Object.defineProperty(Vue.prototype, '_', { value: _ });
+        Object.defineProperty(Vue.prototype, '_', { value: _ })
       }
-    },
-  };
+    }
+  }
 
   Vue.use(VueLodash)
 
@@ -87,5 +86,5 @@ if (typeof window !== 'undefined') {
 }
 if (GlobalVue) {
   window.PIVue = plugin
-  //GlobalVue.use(plugin)
+  // GlobalVue.use(plugin)
 }
