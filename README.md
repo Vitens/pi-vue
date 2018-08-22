@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://vitens.github.io/pi-vue" target="_blank">
-    <img width="280" src="https://raw.githubusercontent.com/vitens/pi-vue/master/docs-src/.vuepress/public/hero.png" alt="logo">
+    <img width="380" src="https://raw.githubusercontent.com/vitens/pi-vue/master/docs-src/.vuepress/public/hero.png" alt="logo">
   </a>
 </p>
 
