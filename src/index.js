@@ -5,13 +5,13 @@ import Trend from './components/Trend.vue'
 import Threshold from './components/Threshold.vue'
 
 import PIWebAPI from './piwebapi.js'
+import ElementUI from 'element-ui'
 
 import AsyncComputed from 'vue-async-computed'
 import axios from 'axios'
 
 import _ from 'lodash'
 
-window._ = _
 
 function assign (target, source) { // eslint-disable-line no-unused-vars
   for (var index = 1, key, src; index < arguments.length; ++index) {
@@ -36,6 +36,19 @@ export function install (Vue, options) {
 
   options = assign(DEFAULT_OPTIONS, options)
   axios.defaults.headers.common['Authorization'] = options['auth_header']
+
+  const VueLodash = {
+    install(Vue) {
+      // prevent duplicate instance on SSR
+      if (!Vue.prototype._) {
+        Object.defineProperty(Vue.prototype, '_', { value: _ });
+      }
+    },
+  };
+
+  Vue.use(VueLodash)
+
+  Vue.use(ElementUI)
 
   Vue.use(AsyncComputed)
   Vue.use(PIWebAPI, options)
@@ -73,5 +86,6 @@ if (typeof window !== 'undefined') {
   GlobalVue = global.Vue
 }
 if (GlobalVue) {
-  GlobalVue.use(plugin)
+  window.PIVue = plugin
+  //GlobalVue.use(plugin)
 }

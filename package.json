@@ -1,6 +1,6 @@
 {
   "name": "pi-vue",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "A Vue.js Plugin",
   "author": "Abel Heinsbroek <mail@abelheinsbroek.nl>",
   "main": "dist/pi-vue.common.js",
@@ -14,7 +14,7 @@
   ],
   "scripts": {
     "clean": "rimraf dist",
-    "build": "yon run build:common && yon run build:browser && yon run build:browser:min",
+    "build": "yarn run build:common && yarn run build:browser && yarn run build:browser:min",
     "build:common": "cross-env NODE_ENV=common webpack --config build/webpack.config.common.js --progress --hide-modules",
     "build:browser:base": "webpack --config build/webpack.config.browser.js --progress --hide-modules",
     "watch": "webpack --config build/webpack.config.browser.js --progress --hide-modules --watch",
@@ -29,7 +29,9 @@
     "pretest": "yon run lint",
     "test": "cross-env BABEL_ENV=test karma start test/karma.conf.js --single-run",
     "dev": "webpack-dashboard -- webpack-dev-server --config build/webpack.config.dev.js --open",
-    "dev:coverage": "cross-env BABEL_ENV=test karma start test/karma.conf.js"
+    "dev:coverage": "cross-env BABEL_ENV=test karma start test/karma.conf.js",
+    "docs:build": "vuepress build docs",
+    "docs:dev": "vuepress dev docs"
   },
   "lint-staged": {
     "*.{vue,jsx,js}": [
@@ -43,19 +45,19 @@
   "dependencies": {
     "axios": "*",
     "chart.js": "^2.7.2",
-    "chartjs-plugin-interpolate": "*",
-    "chartjs-plugin-trace": "*",
     "chartjs-plugin-export": "*",
+    "chartjs-plugin-interpolate": "*",
     "chartjs-plugin-threshold": "*",
+    "chartjs-plugin-trace": "*",
     "es6-promise": "^4.2.4",
     "hammerjs": "^2.0.8",
     "lodash": "^4.17.10",
     "moment": "^2.22.2",
-    "vue-async-computed": "^3.3.1"
+    "vue-async-computed": "^3.3.1",
+    "element-ui": "^2.4.1"
   },
   "pre-commit": "lint:staged",
   "devDependencies": {
-    "null-loader": "^0.1.1",
     "add-asset-html-webpack-plugin": "^2.0.0",
     "babel-core": "^6.24.0",
     "babel-eslint": "^7.2.0",
@@ -88,6 +90,7 @@
     "lint-staged": "^3.4.0",
     "mocha": "^3.3.0",
     "mocha-css": "^1.0.1",
+    "null-loader": "^0.1.1",
     "postcss": "^6.0.0",
     "postcss-cssnext": "^2.10.0",
     "pre-commit": "^1.2.0",

@@ -12,7 +12,6 @@ export default {
   name: 'value',
   props: {
     path: { default: '', type: String },
-    webid: { default: '', type: String },
     context: { default: '', type: String },
     units: { default: '', type: String },
     precision: { default: 2, type: Number },
@@ -34,18 +33,8 @@ export default {
         this.error = ''
         this.value = { Value: '' }
         var path = ''
-        /*
-        if(this.webId == '') {
-          if (this.context == '') {
-            path = this.$pi.parse(this.path, this.$parent.context)
-          } else {
-            path = this.$pi.parse(this.path, this.context)
-          }
-        } else {
-          path = this.webid
-        }
-        */
-        if (this.context == '') {
+
+        if (this.context === '') {
           path = this.$pi.parse(this.path, this.$parent.context)
         } else {
           path = this.$pi.parse(this.path, this.context)

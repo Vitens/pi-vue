@@ -78,7 +78,7 @@ export default {
           }
 
           // check if actual path
-          if (!_.startsWith(path.toLowerCase(), '\\\\sr')) {
+          if (!_.startsWith(path.toLowerCase(), '\\\\')) {
             resolve(path)
             return
           }

@@ -6,7 +6,8 @@ const { vueLoaders } = require('./utils')
 
 module.exports = merge(base, {
   output: {
-    libraryTarget: 'commonjs2'
+  //  libraryTarget: 'commonjs2'
+    libraryTarget: 'umd'
   },
   target: 'node',
   module: {

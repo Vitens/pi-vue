@@ -8,10 +8,6 @@ export default {
       type: Number,
       default: null
     },
-    path: {
-      type: String,
-      default: ''
-    },
     color: {
       type: String,
       default: '#33F'
@@ -22,13 +18,6 @@ export default {
     }
   },
   computed: {
-    pipath () {
-      if (this.context == '') {
-        return this.path
-      } else {
-        return this.$pi.parse(this.path, this.context)
-      }
-    },
 
     data () {
       return {
