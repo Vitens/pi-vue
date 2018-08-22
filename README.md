@@ -8,7 +8,7 @@
 
 # PiVue
 
-https://github.vitens.io/pi-vue
+https://vitens.github.io/pi-vue
 
 ## License
 
