@@ -3,9 +3,9 @@ import Multistate from './components/Multistate.vue'
 import Chart from './components/Chart.vue'
 import Trend from './components/Trend.vue'
 import Threshold from './components/Threshold.vue'
+import Cascader from './components/Cascader.vue'
 
 import PIWebAPI from './piwebapi.js'
-import ElementUI from 'element-ui'
 
 import AsyncComputed from 'vue-async-computed'
 import axios from 'axios'
@@ -30,7 +30,8 @@ export function install (Vue, options) {
   const DEFAULT_OPTIONS = {
     url: '/piwebapi',
     auth_header: '',
-    defeat_cache: true
+    defeat_cache: true,
+    webid2: true
   }
 
   options = assign(DEFAULT_OPTIONS, options)
@@ -47,8 +48,6 @@ export function install (Vue, options) {
 
   Vue.use(VueLodash)
 
-  Vue.use(ElementUI)
-
   Vue.use(AsyncComputed)
   Vue.use(PIWebAPI, options)
 
@@ -57,6 +56,7 @@ export function install (Vue, options) {
   Vue.component('pi-trend', Trend)
   Vue.component('pi-threshold', Threshold)
   Vue.component('pi-chart', Chart)
+  Vue.component('pi-cascader', Cascader)
   /* -- Add more components here -- */
 }
 

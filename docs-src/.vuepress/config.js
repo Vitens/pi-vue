@@ -18,7 +18,8 @@ module.exports = {
           '/introduction',
           '/getting-started',
           '/basic-components',
-          '/charting'
+          '/charting',
+          '/interactive'
       ]
     }]
   },

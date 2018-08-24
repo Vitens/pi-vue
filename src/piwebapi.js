@@ -8,6 +8,7 @@ import axios from 'axios'
 export default {
   install (Vue, options) {
     var apiUrl = options.url
+    var webid2 = options.webid2
 
     Vue.prototype.$http = axios
 
@@ -34,14 +35,26 @@ export default {
 
       computed: {
         requestAttributeValues () {
-          return _.debounce(this.batchRequestAttributeValues, 5)
+          return this._.debounce(this.batchRequestAttributeValues, 5)
         },
         requestAttributeWebIds () {
-          return _.debounce(this.batchRequestAttributeWebIds, 5)
+          return this._.debounce(this.batchRequestAttributeWebIds, 5)
         }
       },
 
       methods: {
+
+        generateWebId2 (path, type) {
+          var webid = 'P1'
+          if (type === 'element') {
+            webid += 'Em'
+          } else if (type === 'attribute') {
+            webid += 'AbE'
+          }
+          webid += btoa(path.substring(2).toUpperCase()).replace('=', '')
+          return webid
+        },
+
 
         getElementWebId (path) {
           var promise = new Promise(
@@ -50,10 +63,16 @@ export default {
             resolve(this.$options.webIdCache[path])
             return
           }
+
+
           // check if actual path
           if (!_.startsWith(path, '\\\\')) {
             resolve(path)
             return
+          }
+
+          if(webid2) {
+            resolve(this.generateWebId2(path, 'element'))
           }
 
           var url = apiUrl + '/elements?selectedFields=WebId&path=' + encodeURIComponent(path)
@@ -78,7 +97,7 @@ export default {
           }
 
           // check if actual path
-          if (!_.startsWith(path.toLowerCase(), '\\\\')) {
+          if (!this._.startsWith(path.toLowerCase(), '\\\\')) {
             resolve(path)
             return
           }
@@ -94,7 +113,7 @@ export default {
           return promise
         },
         getWebId (path) {
-          if (_.includes(path, '|')) {
+          if (this._.includes(path, '|')) {
             return this.getAttributeWebId(path)
           } else if (path.split('\\').length > 4) {
             return this.getElementWebId(path)
@@ -115,9 +134,13 @@ export default {
             return
           }
             // check if actual path
-          if (!_.startsWith(path, '\\\\')) {
+          if (!this._.startsWith(path, '\\\\')) {
             resolve(path)
             return
+          }
+
+          if (webid2) {
+            resolve(this.generateWebId2(path, 'attribute'))
           }
 
             // add the attribute to the buffer
@@ -156,18 +179,18 @@ export default {
           if (moment.isMoment(timestr)) {
             return timestr
           } else {
-            if (timestr == '*') {
+            if (timestr === '*') {
           //
               return moment()
             }
-            if (timestr.indexOf('*') == -1) {
+            if (timestr.indexOf('*') === -1) {
               return moment(timestr)
             }
             var re = /(\*)(.)(\d+)(.)/i
             var matches = timestr.match(re)
 
             var time = moment()
-            if (matches[2] == '-') {
+            if (matches[2] === '-') {
               time.subtract(matches[3], matches[4])
             } else {
               time.add(matches[3], matches[4])
@@ -254,7 +277,7 @@ export default {
           this.$http.get(url).then(response => {
             for (var item of response.data.Items) {
               var path = this.$options.webIdMap[item.WebId]
-              this.$options.valueBuffer = _.without(this.$options.valueBuffer, item.WebId)
+              this.$options.valueBuffer = this._.without(this.$options.valueBuffer, item.WebId)
               this.$emit(path + '-value', item.Value)
               this.$set(this.attributeValues, this.$options.webIdMap[item.WebId], item.Value)
             }
@@ -270,7 +293,7 @@ export default {
                 this.$emit(item.Identifier + '-id', false)
               } else {
                 this.$options.webIdMap[item.Object.WebId] = item.Identifier
-                this.$options.pathBuffer = _.without(this.$options.pathBuffer, item.Identifier)
+                this.$options.pathBuffer = this._.without(this.$options.pathBuffer, item.Identifier)
                 this.$emit(item.Identifier + '-id', item.Object.WebId)
               }
             }
@@ -290,7 +313,7 @@ export default {
             var split = context.split('\\')
             var len = path.match(/\.\./g).length
             var spliced = split.splice(-len, len)
-            if (_.includes(path, '|')) {
+            if (this._.includes(path, '|')) {
               return split.join('\\') + path.substring(path.indexOf('|'))
             } else {
               return split.join('\\')
@@ -346,9 +369,6 @@ export default {
             element = element.data
 
             var response = [element]
-
-            var stop = false
-            var i = 0
 
             while (element.Links.Parent) {
               var request = await this.$http.get(element.Links.Parent)
