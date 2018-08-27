@@ -51,10 +51,9 @@ export default {
           } else if (type === 'attribute') {
             webid += 'AbE'
           }
-          webid += btoa(path.substring(2).toUpperCase()).replace('=', '')
+          webid += btoa(path.substring(2).toUpperCase()).replace(/=/g, '')
           return webid
         },
-
 
         getElementWebId (path) {
           var promise = new Promise(
@@ -73,6 +72,7 @@ export default {
 
           if(webid2) {
             resolve(this.generateWebId2(path, 'element'))
+            return
           }
 
           var url = apiUrl + '/elements?selectedFields=WebId&path=' + encodeURIComponent(path)
@@ -141,6 +141,7 @@ export default {
 
           if (webid2) {
             resolve(this.generateWebId2(path, 'attribute'))
+            return
           }
 
             // add the attribute to the buffer
@@ -204,7 +205,7 @@ export default {
           var promise = new Promise(
         function (resolve, reject) {
           this.getWebId(path).then(response => {
-            var url = apiUrl + '/streams/' + response + '/recorded?startTime=' + this.convertTime(start) + '&endTime=' + this.convertTime(end) + '&maxCount=' + maxCount
+            var url = apiUrl + '/streams/' + response + '/recorded?startTime=' + this.convertTime(start) + '&endTime=' + this.convertTime(end) + '&maxCount=' + maxCount + '&webIDType=PathOnly'
             this.$http.get(url).then(response => {
               resolve(response.data.Items)
             })
@@ -219,7 +220,7 @@ export default {
           var promise = new Promise(
         function (resolve, reject) {
           this.getWebId(path).then(response => {
-            var url = apiUrl + '/streams/' + response + '/plot?startTime=' + this.convertTime(start) + '&endTime=' + this.convertTime(end) + '&intervals=' + intervals + '&_random=' + Math.random()
+            var url = apiUrl + '/streams/' + response + '/plot?startTime=' + this.convertTime(start) + '&endTime=' + this.convertTime(end) + '&intervals=' + intervals + '&webIDType=PathOnly'
             this.$http.get(url).then(response => {
               resolve(response.data.Items)
             })
@@ -251,6 +252,7 @@ export default {
                 req.flush()
               }
             }
+
             this.$once(path + '-value', function (value) {
               if (value) {
                 if (persist) {
@@ -271,7 +273,7 @@ export default {
         },
 
         batchRequestAttributeValues () {
-          var url = apiUrl + '/streamsets/value?webid=' + this.$options.valueBuffer.join('&webid=')
+          var url = apiUrl + '/streamsets/value?webid=' + this.$options.valueBuffer.join('&webid=') + '&webIDType=PathOnly'
       // clear buffer
           this.$options.valueBuffer = []
           this.$http.get(url).then(response => {
@@ -285,7 +287,7 @@ export default {
         },
 
         batchRequestAttributeWebIds () {
-          var url = apiUrl + '/attributes/multiple?path=' + this.$options.pathBuffer.map(encodeURIComponent).join('&path=')
+          var url = apiUrl + '/attributes/multiple?path=' + this.$options.pathBuffer.map(encodeURIComponent).join('&path=') + '&webIDType=PathOnly'
           this.$options.pathBuffer = []
           this.$http.get(url).then(response => {
             for (var item of response.data.Items) {
@@ -333,7 +335,7 @@ export default {
               return
             }
             const webid = await this.getElementWebId(path)
-            const url = apiUrl + '/elements/' + webid + '/elements?selectedFields=Items.WebId;Items.Name;Items.TemplateName;Items.Path;Items.HasChildren;'
+            const url = apiUrl + '/elements/' + webid + '/elements?selectedFields=Items.WebId;Items.Name;Items.TemplateName;Items.Path;Items.HasChildren;' + '&webIDType=PathOnly'
             const response = await this.$http.get(url)
             this.$options.valueCache[cachePath] = response.data.Items
             resolve(response.data.Items)
@@ -349,11 +351,19 @@ export default {
               resolve(this.$options.valueCache[cachePath])
               return
             }
-            const webid = await this.getElementWebId(path)
-            const url = apiUrl + '/elements/' + webid + '/attributes?selectedFields=Items.WebId;Items.Name;Items.TemplateName;Items.Path;Items.HasChildren;' + fields
-            const response = await this.$http.get(url)
-            this.$options.valueCache[cachePath] = response.data.Items
-            resolve(response.data.Items)
+            if (this._.includes(path, '|')) {
+              const webid = await this.getAttributeWebId(path)
+              const url = apiUrl + '/attributes/' + webid + '/attributes?selectedFields=Items.WebId;Items.Name;Items.TemplateName;Items.Path;Items.HasChildren;' + fields + '&webIDType=PathOnly'
+              const response = await this.$http.get(url)
+              resolve(response.data.Items)
+
+            } else {
+              const webid = await this.getElementWebId(path)
+              const url = apiUrl + '/elements/' + webid + '/attributes?selectedFields=Items.WebId;Items.Name;Items.TemplateName;Items.Path;Items.HasChildren;' + fields + '&webIDType=PathOnly'
+              const response = await this.$http.get(url)
+              this.$options.valueCache[cachePath] = response.data.Items
+              resolve(response.data.Items)
+            }
           }.bind(this))
 
           return promise
@@ -363,7 +373,7 @@ export default {
           var promise = new Promise(async function (resolve, reject) {
             const webId = await this.getElementWebId(path)
 
-            var url = apiUrl + '/elements/' + webId
+            var url = apiUrl + '/elements/' + webId + '?webIDType=PathOnly'
             var element = await this.$http.get(url)
 
             element = element.data
@@ -371,7 +381,7 @@ export default {
             var response = [element]
 
             while (element.Links.Parent) {
-              var request = await this.$http.get(element.Links.Parent)
+              var request = await this.$http.get(element.Links.Parent + '?webIDType=PathOnly')
               element = request.data
               response.unshift(element)
             }

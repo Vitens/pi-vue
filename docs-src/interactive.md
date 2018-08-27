@@ -1,4 +1,5 @@
 # Interactive Components
+
 ## Using interactive components
 ::: tip
 Interactive Components are built using [ElementUI](http://element.eleme.io/#/en-US). To use these components you'll need to import ElementUI in your project before importing PIVue
@@ -16,9 +17,7 @@ Vue.use(ElementUI)
 ```
 
 ## Cascader
-The cascader is a convienient component for selecting element context
-and path.
-
+You can use the cascader component to browse through an AF Element structure.
 ### Usage
 **Input**
 ```vue
@@ -33,7 +32,47 @@ and path.
 <script>
 export default {
   data() { return {
-    context: "\\\\PISRV1\\NuGreen\\NuGreen"
+    context: "\\PISRV1\NuGreen\NuGreen\Little Rock\Distilling Process\Equipment\F-272"
+  }}
+}
+</script>
+```
+<ClientOnly>
+<!-- <demo-cascader /> -->
+</ClientOnly>
+
+**Output**
+
+## Tree
+### Usage
+**Input**
+```vue
+<template>
+  <div class='demo'>
+    <el-row>
+      <el-col :span='12'>
+        <h4>Context</h4>
+        <pi-tree :context.sync='context' mode='element' />
+      </el-col>
+      <el-col :span='12'>
+        <h4>Path</h4>
+        <pi-tree :context.sync='context' :path.sync='path' mode='attribute' />
+      </el-col>
+    </el-row>
+    <br />
+
+    <strong>Selected Context / Path: </strong><br />
+    {{context}} <br />
+    {{path}} <br />
+    <pi-value :path='path' :context='context' />
+  </div>
+
+</template>
+<script>
+export default {
+  data() { return {
+    context: "\\\\PISRV1\\NuGreen\\NuGreen\\Little Rock\\Distilling Process\\Equipment\\F-272",
+    path: ""
   }}
 }
 </script>
@@ -41,8 +80,5 @@ export default {
 
 **Output**
 <ClientOnly>
-<demo-cascader />
+<demo-tree />
 </ClientOnly>
-
-
-
