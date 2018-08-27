@@ -1,6 +1,5 @@
 <template>
   <div class='demo'>
-    <!--
     <el-row>
       <el-col :span='12'>
         <h4>Context</h4>
@@ -18,12 +17,6 @@
     {{path}} <br />
 
     <pi-value :path='path' :context='context' />
-
-    -->
-    <pi-value path='.|Asset Name' :context='context' />
-    <pi-value path='.|Blades' :context='context' />
-    <pi-value path='.|Non Existant' :context='context' />
-
   </div>
 
 </template>

@@ -20,7 +20,5 @@ export default({
      url: 'https://devdata.osisoft.com/piwebapi',
      auth_header: 'Basic d2ViYXBpdXNlcjohdHJ5My4xNHdlYmFwaSE=',
      webid2: true,
-     //url: 'https://www.abelheinsbroek.nl/piwebapi',
-     //auth_header: 'Basic YWRtaW46c3BpYy1waS1sb3RvLWRpeg=='
   })
 }
