@@ -17,6 +17,7 @@
     {{path}} <br />
 
     <pi-value :path='path' :context='context' />
+
   </div>
 
 </template>

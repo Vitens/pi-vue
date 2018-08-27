@@ -19,6 +19,6 @@ export default({
   Vue.use(PIVue, {
      url: 'https://devdata.osisoft.com/piwebapi',
      auth_header: 'Basic d2ViYXBpdXNlcjohdHJ5My4xNHdlYmFwaSE=',
-     webid2: true,
+     webid2: false,
   })
 }

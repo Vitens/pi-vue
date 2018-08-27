@@ -38,7 +38,7 @@ export default {
 </script>
 ```
 <ClientOnly>
-<!-- <demo-cascader /> -->
+<demo-cascader />
 </ClientOnly>
 
 **Output**
