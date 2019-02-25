@@ -2,8 +2,10 @@ import Value from './components/Value.vue'
 import Multistate from './components/Multistate.vue'
 import Chart from './components/Chart.vue'
 import Trend from './components/Trend.vue'
+import Axis from './components/Axis.vue'
 import Threshold from './components/Threshold.vue'
 import Cascader from './components/Cascader.vue'
+import Tree from './components/Tree.vue'
 
 import PIWebAPI from './piwebapi.js'
 
@@ -35,7 +37,9 @@ export function install (Vue, options) {
   }
 
   options = assign(DEFAULT_OPTIONS, options)
-  axios.defaults.headers.common['Authorization'] = options['auth_header']
+  if(options['auth_header'] !== '') {
+    axios.defaults.headers.common['Authorization'] = options['auth_header']
+  }
 
   const VueLodash = {
     install (Vue) {
@@ -54,9 +58,12 @@ export function install (Vue, options) {
   Vue.component('pi-value', Value)
   Vue.component('pi-multistate', Multistate)
   Vue.component('pi-trend', Trend)
+  Vue.component('pi-axis', Axis)
   Vue.component('pi-threshold', Threshold)
   Vue.component('pi-chart', Chart)
+
   Vue.component('pi-cascader', Cascader)
+  Vue.component('pi-tree', Tree)
   /* -- Add more components here -- */
 }
 

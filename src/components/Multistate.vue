@@ -27,6 +27,9 @@ export default {
       var path = this.$pi.parse(this.path, this.context)
       try {
         var value = await this.$pi.getValue(path, true)
+        if(typeof value.Value === 'object') {
+          value.Value = value.Value.Value
+        }
 
         for (var rule of this.colors) {
           if (value.Value === true || value.Value === false) {

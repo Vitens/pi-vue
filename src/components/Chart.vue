@@ -1,5 +1,20 @@
 <template>
   <div class='pi-chart' @dblclick="isFullscreen = !isFullscreen" :class="{fullscreen: isFullscreen}">
+    <el-popover
+      
+      placement="left"
+      >
+      <div class='pi-chart-axis-controls'>
+        <label>maximum</label>
+        <el-input-number size='small' controls-position='right' placeholder='auto' v-model='userMax' :step='userStep'></el-input-number>
+        <label>minimum</label>
+        <el-input-number size='small' controls-position='right' placeholder='auto' v-model='userMin' :step='userStep'></el-input-number>
+      </div>
+
+      <div slot='reference' class='pi-chart-axis-area' @click='controlsVisible = !controlsVisible'>
+      </div>
+    </el-popover>
+    
     <transition name='fade'>
       <div class='pi-loading' v-show='loading'></div>
     </transition>
@@ -14,32 +29,57 @@ import Chart from 'chart.js'
 
 import _ from 'lodash'
 
-import 'chartjs-plugin-interpolate'
-import 'chartjs-plugin-trace'
 import 'chartjs-plugin-export'
+import 'chartjs-plugin-crosshair'
 import 'chartjs-plugin-threshold'
+
+const legendPlugin = {
+  id: 'legendPlugin',
+  afterEvent: function (chart, e) {
+    if (chart.legendHovered) {
+      var meta = chart.getDatasetMeta(0)
+      var yScale = chart.scales[meta.yAxisID]
+      if (e.y > yScale.getPixelForValue(yScale.max)) {
+        chart.legendHovered = false
+        chart.lasthovered = -1
+        for (var index = 0; index < chart.config.data.datasets.length; index++) {
+          chart.config.data.datasets[index].backgroundColor = chart.config.data.datasets[index].originalColor
+        }
+        chart.update()
+      }
+    }
+  },
+  beforeTooltipDraw: function (chart) {
+    return !chart.legendHovered
+  }
+}
 
 export default {
   data () {
     return {
       mounted: false,
-      components: { series: {}, thresholds: {}},
+      components: { series: {}, thresholds: {}, axis: {}},
+      reload_on_next_update: true,
       zoomed: false,
       chart: null,
       isFullscreen: false,
       loading: true,
       chartStart: '',
       chartEnd: '',
-      uid: ''
+      uid: '',
+      controlsVisible: false,
+      userMin: 0,
+      userMax: 0,
+      userStep: 0.1
     }
   },
   props: {
     start: {
-      type: String,
+      type: [String, Number],
       default: '*-24h'
     },
     end: {
-      type: String,
+      type: [String, Number],
       default: '*'
     },
     responsive: {
@@ -62,22 +102,6 @@ export default {
       type: String,
       default: ''
     },
-    min: {
-      type: Number,
-      default: null
-    },
-    max: {
-      type: Number,
-      default: null
-    },
-    suggestedMin: {
-      type: Number,
-      default: null
-    },
-    suggestedMax: {
-      type: Number,
-      default: null
-    },
     legend: {
       type: String,
       default: 'none'
@@ -99,9 +123,28 @@ export default {
         }
         this.loadData()
       }
-    }, 50)
+    }, 1000)
   },
   watch: {
+    controlsVisible (val) {
+      this.userMin = this.$options.chart.scales['y-axis-0'].min
+      this.userMax = this.$options.chart.scales['y-axis-0'].max
+      var diff = this.userMax - this.userMin
+      if (diff > 10) {
+        this.userStep = 1
+      }
+      if (diff < 0.4) {
+        this.userStep = 0.01
+      }
+    },
+    userMin (val) {
+      this.$options.chart.options.scales.yAxes[0].ticks.min = val
+      this.$options.chart.update()
+    },
+    userMax (val) {
+      this.$options.chart.options.scales.yAxes[0].ticks.max = val
+      this.$options.chart.update()
+    },
     start (val) {
       this.requestLoad()
     },
@@ -117,7 +160,9 @@ export default {
       this.$options.chart.update()
     },
     components: {
-      handler: function () { this.requestLoad() },
+      handler: function (newVal) {
+        this.requestLoad()
+      },
       deep: true
     }
   },
@@ -127,12 +172,34 @@ export default {
     this.chartEnd = this.end
 
     var options = {
-      type: 'line',
+      type: 'scatter',
+      plugins: [legendPlugin],
+
       options: {
         animation: false,
         title: {
-          display: this.title != '',
+          display: this.title !== '',
           text: this.title
+        },
+        plugins: {
+          crosshair: {
+            sync: {
+              suppressTooltips: true
+            },
+            zoom: {
+              zoomButtonClass: 'reset-zoom el-button el-button--small'
+            },
+            callbacks: {
+              beforeZoom (start, end) {
+                return true
+              },
+              afterZoom: function (start, end) {
+                this.chartStart = start
+                this.chartEnd = end
+                this.loadData(false)
+              }.bind(this)
+            }
+          }
         },
         events: ['mousemove', 'mouseout', 'mouseup'],
         responsive: this.responsive,
@@ -142,7 +209,19 @@ export default {
           enabled: this.tooltips,
           intersect: false,
           mode: 'interpolate',
-          position: 'average'
+          position: 'average',
+          callbacks: {
+            title: function(a, d) {
+              if(typeof a[0].xLabel !== 'string') {
+                return a[0].xLabel.format("dd D MMM YYYY HH:mm")
+              } else {
+                return a[0].xLabel
+              }
+            },
+            label: function(i, d) {
+              return d.datasets[i.datasetIndex].label + ": " + i.yLabel.toFixed(2)
+            }
+        }
         },
         elements: {
           line: {
@@ -150,8 +229,26 @@ export default {
           }
         },
         legend: {
-          display: this.legend != 'none',
-          position: this.legend
+          display: this.legend !== 'none',
+          position: this.legend,
+          onHover: function (event, legendItem) {
+            var ci = this.chart
+            var hoveredDatasetIndex = legendItem.datasetIndex
+            if (ci.lasthovered === hoveredDatasetIndex) {
+              return
+            }
+
+            ci.lasthovered = hoveredDatasetIndex
+            for (var index = 0; index < ci.config.data.datasets.length; index++) {
+              if (!ci.config.data.datasets[index].originalColor) {
+                ci.config.data.datasets[index].originalColor = ci.config.data.datasets[index].backgroundColor
+              }
+              ci.config.data.datasets[index].backgroundColor = 'rgba(0,0,0,0.025)'
+            }
+            ci.config.data.datasets[hoveredDatasetIndex].backgroundColor = ci.config.data.datasets[hoveredDatasetIndex].originalColor
+            ci.legendHovered = true
+            ci.update()
+          }
         },
         scales: {
           xAxes: [{
@@ -164,21 +261,9 @@ export default {
               tooltipFormat: 'dd. D MMM HH:mm:ss'
             }
           }],
-          yAxes: [{
-            type: 'linear',
-            position: 'left',
-            ticks: {}
-          }]
+          yAxes: []
         },
         trace: {
-          beforeZoom (start, end) {
-            return true
-          },
-          afterZoom: function (start, end) {
-            this.chartStart = start
-            this.chartEnd = end
-            this.loadData(false)
-          }.bind(this)
         },
         threshold: []
       }
@@ -187,8 +272,7 @@ export default {
     this.$nextTick(function () {
       var ctx = document.getElementById(this.uid)
       this.$options.chart = new Chart(ctx, options)
-      console.log('requesting load')
-      this.requestLoad()
+      //this.requestLoad()
     })
   },
   beforeDestroy () {
@@ -200,19 +284,26 @@ export default {
     fullscreen (evt) {
       evt.preventDefault()
     },
+
     requestLoad () {},
+
     updateData (uid, data) {
       if (data.type == 'trend') {
         this.$set(this.components.series, String(uid), data)
-      } else {
+      } else if(data.type == 'threshold') {
         this.$set(this.components.thresholds, String(uid), data)
+      } else {
+        this.$set(this.components.axis, String(uid), data)
       }
     },
+
     deleteData (uid, data) {
-      if (data.type == 'trend') {
+      if (data.type === 'trend') {
         this.$delete(this.components.series, String(uid))
+      } else if(data.type == 'theshold') {
+        this.$delete(this.components.thresholds, String(uid))
       } else {
-        this.$set(this.components.thresholds, String(uid), data)
+        this.$delete(this.components.axis, String(uid))
       }
     },
 
@@ -223,31 +314,10 @@ export default {
 
       this.$options.chart.stop()
 
-      if (this.min != null) {
-        this.$options.chart.options.scales.yAxes[0].ticks.min = this.min
-      } else {
-        delete this.$options.chart.options.scales.yAxes[0].ticks.min
-      }
-      if (this.max != null) {
-        this.$options.chart.options.scales.yAxes[0].ticks.max = this.max
-      } else {
-        delete this.$options.chart.options.scales.yAxes[0].ticks.max
-      }
-      if (this.suggestedMin != null) {
-        this.$options.chart.options.scales.yAxes[0].ticks.suggestedMin = this.suggestedMin
-      } else {
-        delete this.$options.chart.options.scales.yAxes[0].ticks.suggestedMin
-      }
-
-      if (this.suggestedMax != null) {
-        this.$options.chart.options.scales.yAxes[0].ticks.suggestedMax = this.suggestedMax
-      } else {
-        delete this.$options.chart.options.scales.yAxes[0].ticks.suggestedMax
-      }
-
       if (reset) {
         this.$options.chart.data.datasets = []
         this.$options.chart.options.threshold = []
+        this.$options.chart.options.scales.yAxes = []
         this.$options.chart.update()
       }
 
@@ -256,26 +326,30 @@ export default {
       this.$options.chart.options.scales.xAxes[0].time.max = this.$pi.parseTime(this.chartEnd)
 
       // set title
-      this.$options.chart.options.title.display = this.title != ''
+      this.$options.chart.options.title.display = this.title !== ''
       this.$options.chart.options.title.text = this.title
-
-      // set ylabel
-      this.$options.chart.options.scales.yAxes[0].scaleLabel.display = this.yLabel != ''
-      this.$options.chart.options.scales.yAxes[0].scaleLabel.labelString = this.yLabel
 
       // load thresholds
       for (var thresholdId in this.components.thresholds) {
         this.$options.chart.options.threshold.push(this.components.thresholds[thresholdId])
       }
+      console.log(this.$options.chart.options)
 
-      var data = []
+      // load axis
+      for (var axisId in this.components.axis) {
+        var axis = Object.assign({}, this.components.axis[axisId])
+        axis.type = 'linear'
+        this.$options.chart.options.scales.yAxes.push(axis)
+        // hide default axis
+        this.$options.chart.options.scales.yAxes[0].display = false
+      }
+
       // use a request token to check if we need to cancel this method as Promises cannot really be cancelled (yet)
       var requestToken = Math.random()
       this.$options.requestToken = requestToken
 
       var requests = []
       for (var objectId in this.components.series) {
-        const series = this.components.series[objectId]
         const path = this.components.series[objectId].path
         if (this.components.series[objectId].recorded) {
           requests.push(this.$pi.getRecorded(path, this.chartStart, this.chartEnd))
@@ -323,13 +397,14 @@ export default {
           objectId: objectId,
           showLine: series.line,
           interpolate: series.line,
-          steppedLine: series.stepped
+          steppedLine: series.stepped,
+          yAxisID: series.yAxisID
         }
 
         if (!reset) {
           for (var index in this.$options.chart.data.datasets) {
             var dataset = this.$options.chart.data.datasets[index]
-            if (dataset.objectId == objectId) {
+            if (dataset.objectId === objectId) {
               this.$options.chart.data.datasets[index] = newDataset
             }
           }
@@ -441,5 +516,21 @@ export default {
   z-index: 100000;
 }
 
-
+.pi-chart-axis-area {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  bottom: 0px;
+  width: 35px;
+  cursor: pointer;
+  background: rgba(255,0,0,0.0);
+}
+.pi-chart-axis-area:focus {
+  outline: none;
+}
+.pi-chart-axis-controls label {
+  display: block;
+  margin-top: 5px;
+  font-weight: bold;
+}
 </style>

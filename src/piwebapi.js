@@ -179,7 +179,14 @@ export default {
         parseTime (timestr) {
           if (moment.isMoment(timestr)) {
             return timestr
-          } else {
+          }
+          else if (typeof timestr === 'object') {
+            return moment(timestr)
+          }
+          else {
+            if (typeof timestr === 'number') {
+              return moment(String(timestr) + '-01-01')
+            }
             if (timestr === '*') {
           //
               return moment()
@@ -199,6 +206,35 @@ export default {
 
             return time
           }
+        },
+        getInterpolated (path, start = '*-1d', end = '*', interval = '1m') {
+          var promise = new Promise(
+        function (resolve, reject) {
+          this.getWebId(path).then(response => {
+            var url = apiUrl + '/streams/' + response + '/interpolated?startTime=' + this.convertTime(start) + '&endTime=' + this.convertTime(end) + '&interval=' + interval + '&webIDType=PathOnly'
+            this.$http.get(url).then(response => {
+              resolve(response.data.Items)
+            })
+          }, reject => {
+            resolve([])
+          })
+        }.bind(this))
+          return promise
+        },
+
+        getSummary (path, start = '*-1d', end = '*', duration = '1h', summarytype='Average') {
+          var promise = new Promise(
+        function (resolve, reject) {
+          this.getWebId(path).then(response => {
+            var url = apiUrl + '/streams/' + response + '/summary?startTime=' + this.convertTime(start) + '&endTime=' + this.convertTime(end) + '&summaryDuration=' + duration + '&summaryType=' + summarytype + '&webIDType=PathOnly'
+            this.$http.get(url).then(response => {
+              resolve(response.data.Items)
+            })
+          }, reject => {
+            resolve([])
+          })
+        }.bind(this))
+          return promise
         },
 
         getRecorded (path, start = '*-1d', end = '*', maxCount = 10000) {

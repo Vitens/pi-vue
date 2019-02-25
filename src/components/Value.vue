@@ -41,7 +41,7 @@ export default {
         }
 
         var value = await this.$pi.getValue(path, this.static)
-        if (!value.Good) {
+        if (!value.Good || value.Value === -99999) {
           value.Value = 'No Data'
         }
         this.loading = false
