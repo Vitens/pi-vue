@@ -44,6 +44,9 @@ export default {
         if (!value.Good || value.Value === -99999) {
           value.Value = 'No Data'
         }
+        if (typeof(value.Value) === 'object') {
+          value.Value = value.Value.Name
+        }
         this.loading = false
         return value
       } catch (e) {

@@ -1,6 +1,6 @@
 /*!
- * pi-vue v1.0.0
- * (c) 2018 Abel Heinsbroek
+ * pi-vue v1.0.7
+ * (c) 2019 Abel Heinsbroek
  * Released under the MIT License.
  */
 
@@ -10,16 +10,16 @@
 }
 
 .red {
-  background: #FF2323;
+  background-color: #FF2323;
 }
 .green {
-  background: #67B23A;
+  background-color: #67B23A;
 }
 .yellow {
-  background: #F6CA2A;
+  background-color: #F6CA2A;
 }
 .orange {
-  background: #FF6C00;
+  background-color: #FF6C00;
 }
 .multistate .loading {
   display: inline-block;
@@ -113,8 +113,28 @@
   right: 0px;
   bottom: 0px;
 
-  position: fixed;
+  position: fixed !important;
   z-index: 100000;
+}
+.pi-chart-axis-area {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  bottom: 0px;
+  width: 35px;
+  cursor: pointer;
+  background: rgba(255, 0, 0, .0);
+}
+.pi-chart-axis-area:focus {
+  outline: none;
+}
+.pi-chart-popper {
+  z-index: 100001 !important;
+}
+.pi-chart-axis-controls label {
+  display: block;
+  margin-top: 5px;
+  font-weight: bold;
 }
 
 
@@ -146,6 +166,134 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.pi-element-browser .el-cascader__label {
+  direction: rtl
+}
+@media only screen and (max-width: 600px) {
+.pi-element-browser {
+    width: 100%;
+    margin-bottom: 5px;
+}
+.pi-element-browser .el-cascader__label {
+    direction: rtl
+}
+.el-cascader {
+    width: 100%;
+}
+div.el-cascader-menus.el-popper {
+    overflow-x: scroll;
+    -webkit-overflow-scrolling: touch;
+    left: 10px !important;
+    right: 10px !important;
+}
+}
 
 
 

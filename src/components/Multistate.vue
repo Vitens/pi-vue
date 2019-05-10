@@ -8,7 +8,7 @@
 <script>
 
 export default {
-  name: 'value',
+  name: 'multistate',
   props: {
     path: { default: '', type: String },
     context: { default: '', type: String },
@@ -17,7 +17,8 @@ export default {
   data () {
     return {
       loading: true,
-      stateClass: ''
+      stateClass: '',
+      value: null
     }
   },
   asyncComputed: {
@@ -27,18 +28,24 @@ export default {
       var path = this.$pi.parse(this.path, this.context)
       try {
         var value = await this.$pi.getValue(path, true)
-        if(typeof value.Value === 'object') {
-          value.Value = value.Value.Value
+
+        if (typeof value.Value === 'object') {
+          value = value.Value.Value
+        } else{
+          value = value.Value
         }
 
+        this.value = value
+
         for (var rule of this.colors) {
-          if (value.Value === true || value.Value === false) {
-            if (value.Value === rule[0]) {
+          if (value === true || value === false) {
+            if (value === rule[0]) {
               this.stateClass = rule[1]
               break
             }
           } else {
-            if (value.Value <= rule[0]) {
+
+            if (value <= rule[0]) {
               this.stateClass = rule[1]
               break
             }
@@ -56,16 +63,16 @@ export default {
 </script>
 <style>
 .red {
-  background: #FF2323;
+  background-color: #FF2323;
 }
 .green {
-  background: #67B23A;
+  background-color: #67B23A;
 }
 .yellow {
-  background: #F6CA2A;
+  background-color: #F6CA2A;
 }
 .orange {
-  background: #FF6C00;
+  background-color: #FF6C00;
 }
 .multistate .loading {
   display: inline-block;

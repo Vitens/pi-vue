@@ -29,6 +29,7 @@ module.exports = {
   },
   entry: './src/index.js',
   resolve: {
+    symlinks: false,
     extensions: ['.js', '.vue', '.jsx', 'css'],
     alias: {
       'src': resolve(__dirname, '../src')

@@ -14,6 +14,8 @@ import axios from 'axios'
 
 import _ from 'lodash'
 
+
+
 function assign (target, source) { // eslint-disable-line no-unused-vars
   for (var index = 1, key, src; index < arguments.length; ++index) {
     src = arguments[index]
@@ -37,7 +39,7 @@ export function install (Vue, options) {
   }
 
   options = assign(DEFAULT_OPTIONS, options)
-  if(options['auth_header'] !== '') {
+  if (options['auth_header'] !== '') {
     axios.defaults.headers.common['Authorization'] = options['auth_header']
   }
 

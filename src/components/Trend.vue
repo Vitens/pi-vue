@@ -43,6 +43,10 @@ export default {
     recorded: {
       type: Boolean,
       default: false
+    },
+    interpolated: {
+      type: Boolean,
+      default: false
     }
   },
   computed: {
@@ -58,15 +62,16 @@ export default {
       return {
         type: 'trend',
         label: this.label,
-        path: this.pipath,
         color: this.color,
         width: this.width,
         marker: this.marker,
         markersize: this.marker == 'none' ? 0 : this.markerSize,
         interpolate: !this.line,
         line: this.line,
+        stepped: this.stepped,
+        path: this.pipath,
         recorded: this.recorded,
-        stepped: this.stepped
+        interpolated: this.interpolated
       }
     }
   },

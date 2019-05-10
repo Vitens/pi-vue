@@ -3,6 +3,7 @@
     <el-popover
       
       placement="left"
+      popper-class='pi-chart-popper'
       >
       <div class='pi-chart-axis-controls'>
         <label>maximum</label>
@@ -29,6 +30,7 @@ import Chart from 'chart.js'
 
 import _ from 'lodash'
 
+import 'chartjs-plugin-zoom'
 import 'chartjs-plugin-export'
 import 'chartjs-plugin-crosshair'
 import 'chartjs-plugin-threshold'
@@ -59,7 +61,6 @@ export default {
     return {
       mounted: false,
       components: { series: {}, thresholds: {}, axis: {}},
-      reload_on_next_update: true,
       zoomed: false,
       chart: null,
       isFullscreen: false,
@@ -127,8 +128,12 @@ export default {
   },
   watch: {
     controlsVisible (val) {
-      this.userMin = this.$options.chart.scales['y-axis-0'].min
-      this.userMax = this.$options.chart.scales['y-axis-0'].max
+
+      var yscale = this.$options.chart.scales[this.$options.chart.getDatasetMeta(0).yAxisID]
+
+
+      this.userMin = yscale.min
+      this.userMax = yscale.max
       var diff = this.userMax - this.userMin
       if (diff > 10) {
         this.userStep = 1
@@ -138,11 +143,11 @@ export default {
       }
     },
     userMin (val) {
-      this.$options.chart.options.scales.yAxes[0].ticks.min = val
+      this.$options.chart.options.scales.yAxes[this.$options.chart.options.scales.yAxes.length - 1].ticks.min = val
       this.$options.chart.update()
     },
     userMax (val) {
-      this.$options.chart.options.scales.yAxes[0].ticks.max = val
+      this.$options.chart.options.scales.yAxes[this.$options.chart.options.scales.yAxes.length - 1].ticks.max = val
       this.$options.chart.update()
     },
     start (val) {
@@ -182,6 +187,17 @@ export default {
           text: this.title
         },
         plugins: {
+          zoom: {
+            pan: {
+              enabled: true,
+              mode: 'x',
+            },
+            zoom: {
+              enabled: true,
+              mode: 'x'
+            }
+          },
+
           crosshair: {
             sync: {
               suppressTooltips: true
@@ -211,17 +227,17 @@ export default {
           mode: 'interpolate',
           position: 'average',
           callbacks: {
-            title: function(a, d) {
-              if(typeof a[0].xLabel !== 'string') {
-                return a[0].xLabel.format("dd D MMM YYYY HH:mm")
+            title: function (a, d) {
+              if (typeof a[0].xLabel !== 'string') {
+                return a[0].xLabel.format('dd D MMM YYYY HH:mm')
               } else {
                 return a[0].xLabel
               }
             },
-            label: function(i, d) {
-              return d.datasets[i.datasetIndex].label + ": " + i.yLabel.toFixed(2)
+            label: function (i, d) {
+              return d.datasets[i.datasetIndex].label + ': ' + i.yLabel.toFixed(2)
             }
-        }
+          }
         },
         elements: {
           line: {
@@ -269,10 +285,15 @@ export default {
       }
     }
 
+    // check for mobile
+    if(/Mobi/.test(navigator.userAgent) == false){
+      options.options.plugins.zoom = false
+    }
+
     this.$nextTick(function () {
       var ctx = document.getElementById(this.uid)
       this.$options.chart = new Chart(ctx, options)
-      //this.requestLoad()
+      // this.requestLoad()
     })
   },
   beforeDestroy () {
@@ -290,7 +311,7 @@ export default {
     updateData (uid, data) {
       if (data.type == 'trend') {
         this.$set(this.components.series, String(uid), data)
-      } else if(data.type == 'threshold') {
+      } else if (data.type == 'threshold') {
         this.$set(this.components.thresholds, String(uid), data)
       } else {
         this.$set(this.components.axis, String(uid), data)
@@ -300,7 +321,7 @@ export default {
     deleteData (uid, data) {
       if (data.type === 'trend') {
         this.$delete(this.components.series, String(uid))
-      } else if(data.type == 'theshold') {
+      } else if (data.type == 'theshold') {
         this.$delete(this.components.thresholds, String(uid))
       } else {
         this.$delete(this.components.axis, String(uid))
@@ -333,7 +354,6 @@ export default {
       for (var thresholdId in this.components.thresholds) {
         this.$options.chart.options.threshold.push(this.components.thresholds[thresholdId])
       }
-      console.log(this.$options.chart.options)
 
       // load axis
       for (var axisId in this.components.axis) {
@@ -351,7 +371,10 @@ export default {
       var requests = []
       for (var objectId in this.components.series) {
         const path = this.components.series[objectId].path
-        if (this.components.series[objectId].recorded) {
+        if (this.components.series[objectId].interpolated) {
+          requests.push(this.$pi.getInterpolated(path, this.chartStart, this.chartEnd, '300s'))
+        }
+        else if (this.components.series[objectId].recorded) {
           requests.push(this.$pi.getRecorded(path, this.chartStart, this.chartEnd))
         } else {
           requests.push(this.$pi.getPlot(path, this.chartStart, this.chartEnd, 150))
@@ -512,7 +535,7 @@ export default {
   right: 0px;
   bottom: 0px;
 
-  position: fixed;
+  position: fixed !important;
   z-index: 100000;
 }
 
@@ -527,6 +550,9 @@ export default {
 }
 .pi-chart-axis-area:focus {
   outline: none;
+}
+.pi-chart-popper {
+  z-index: 100001 !important;
 }
 .pi-chart-axis-controls label {
   display: block;
