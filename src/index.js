@@ -14,8 +14,6 @@ import axios from 'axios'
 
 import _ from 'lodash'
 
-
-
 function assign (target, source) { // eslint-disable-line no-unused-vars
   for (var index = 1, key, src; index < arguments.length; ++index) {
     src = arguments[index]

@@ -31,7 +31,7 @@ export default {
 
         if (typeof value.Value === 'object') {
           value = value.Value.Value
-        } else{
+        } else {
           value = value.Value
         }
 
@@ -44,7 +44,6 @@ export default {
               break
             }
           } else {
-
             if (value <= rule[0]) {
               this.stateClass = rule[1]
               break

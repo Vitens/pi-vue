@@ -1,5 +1,8 @@
 <template>
-  <div class='pi-chart' @dblclick="isFullscreen = !isFullscreen" :class="{fullscreen: isFullscreen}">
+  <div class='pi-chart' @dblclick="isFullscreen = !isFullscreen" :class="{fullscreen: isFullscreen}" ref="container">
+
+    <div class='pi-updating' v-show='updating'></div>
+
     <el-popover
       
       placement="left"
@@ -30,10 +33,11 @@ import Chart from 'chart.js'
 
 import _ from 'lodash'
 
-import 'chartjs-plugin-zoom'
 import 'chartjs-plugin-export'
+
 import 'chartjs-plugin-crosshair'
 import 'chartjs-plugin-threshold'
+import 'chartjs-plugin-mobilezoom'
 
 const legendPlugin = {
   id: 'legendPlugin',
@@ -65,6 +69,7 @@ export default {
       chart: null,
       isFullscreen: false,
       loading: true,
+      updating: false,
       chartStart: '',
       chartEnd: '',
       uid: '',
@@ -89,7 +94,7 @@ export default {
     },
     maintainAspectRatio: {
       type: Boolean,
-      default: true
+      default:  !/Mobi/.test(navigator.userAgent)
     },
     tooltips: {
       type: Boolean,
@@ -128,9 +133,7 @@ export default {
   },
   watch: {
     controlsVisible (val) {
-
       var yscale = this.$options.chart.scales[this.$options.chart.getDatasetMeta(0).yAxisID]
-
 
       this.userMin = yscale.min
       this.userMax = yscale.max
@@ -187,14 +190,17 @@ export default {
           text: this.title
         },
         plugins: {
-          zoom: {
-            pan: {
-              enabled: true,
-              mode: 'x',
-            },
-            zoom: {
-              enabled: true,
-              mode: 'x'
+          mobilezoom: {
+            callbacks: {
+              afterZoomPan: function(start, end) {
+                console.log(start, end)
+                this.chartStart = start
+                this.chartEnd = end
+                this.loadData(false)
+              }.bind(this),
+              doubleTap: function() {
+                this.toggleMobileFullScreen()
+              }.bind(this)
             }
           },
 
@@ -286,9 +292,12 @@ export default {
     }
 
     // check for mobile
-    if(/Mobi/.test(navigator.userAgent) == false){
-      options.options.plugins.zoom = false
+    if (/Mobi/.test(navigator.userAgent) == false) {
+      options.options.plugins.mobilezoom = false
+    } else {
+      options.options.plugins.crosshair = false
     }
+
 
     this.$nextTick(function () {
       var ctx = document.getElementById(this.uid)
@@ -302,6 +311,17 @@ export default {
   },
 
   methods: {
+    toggleMobileFullScreen() {
+
+      if(this.isFullscreen) {
+        this.$refs.container.style.height = this.$options.height + "px"
+      } else{
+        this.$options.height = this.$refs.container.clientHeight
+        this.$refs.container.style.height = null
+      }
+      this.isFullscreen = !this.isFullscreen
+    },
+
     fullscreen (evt) {
       evt.preventDefault()
     },
@@ -331,6 +351,9 @@ export default {
     async loadData (reset = true) {
       if (!this.$options.chart) {
         return
+      }
+      if(!this.loading) {
+        this.updating = true
       }
 
       this.$options.chart.stop()
@@ -365,6 +388,7 @@ export default {
       }
 
       // use a request token to check if we need to cancel this method as Promises cannot really be cancelled (yet)
+
       var requestToken = Math.random()
       this.$options.requestToken = requestToken
 
@@ -373,8 +397,7 @@ export default {
         const path = this.components.series[objectId].path
         if (this.components.series[objectId].interpolated) {
           requests.push(this.$pi.getInterpolated(path, this.chartStart, this.chartEnd, '300s'))
-        }
-        else if (this.components.series[objectId].recorded) {
+        } else if (this.components.series[objectId].recorded) {
           requests.push(this.$pi.getRecorded(path, this.chartStart, this.chartEnd))
         } else {
           requests.push(this.$pi.getPlot(path, this.chartStart, this.chartEnd, 150))
@@ -436,6 +459,7 @@ export default {
         }
       }
       this.loading = false
+      this.updating = false
 
       this.$options.chart.update()
     }
@@ -558,5 +582,13 @@ export default {
   display: block;
   margin-top: 5px;
   font-weight: bold;
+}
+.pi-chart .pi-updating {
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 16px;
+  height: 16px;
+  background: url(data:image/gif;base64,R0lGODlhEAAQAPQAAP///1hYWPr6+nx8fK6urltbW3BwcOPj48XFxWZmZqWlpZqamu3t7bu7u9nZ2YeHh5CQkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCgAAACwAAAAAEAAQAAAFUCAgjmRpnqUwFGwhKoRgqq2YFMaRGjWA8AbZiIBbjQQ8AmmFUJEQhQGJhaKOrCksgEla+KIkYvC6SJKQOISoNSYdeIk1ayA8ExTyeR3F749CACH5BAkKAAAALAAAAAAQABAAAAVoICCKR9KMaCoaxeCoqEAkRX3AwMHWxQIIjJSAZWgUEgzBwCBAEQpMwIDwY1FHgwJCtOW2UDWYIDyqNVVkUbYr6CK+o2eUMKgWrqKhj0FrEM8jQQALPFA3MAc8CQSAMA5ZBjgqDQmHIyEAIfkECQoAAAAsAAAAABAAEAAABWAgII4j85Ao2hRIKgrEUBQJLaSHMe8zgQo6Q8sxS7RIhILhBkgumCTZsXkACBC+0cwF2GoLLoFXREDcDlkAojBICRaFLDCOQtQKjmsQSubtDFU/NXcDBHwkaw1cKQ8MiyEAIfkECQoAAAAsAAAAABAAEAAABVIgII5kaZ6AIJQCMRTFQKiDQx4GrBfGa4uCnAEhQuRgPwCBtwK+kCNFgjh6QlFYgGO7baJ2CxIioSDpwqNggWCGDVVGphly3BkOpXDrKfNm/4AhACH5BAkKAAAALAAAAAAQABAAAAVgICCOZGmeqEAMRTEQwskYbV0Yx7kYSIzQhtgoBxCKBDQCIOcoLBimRiFhSABYU5gIgW01pLUBYkRItAYAqrlhYiwKjiWAcDMWY8QjsCf4DewiBzQ2N1AmKlgvgCiMjSQhACH5BAkKAAAALAAAAAAQABAAAAVfICCOZGmeqEgUxUAIpkA0AMKyxkEiSZEIsJqhYAg+boUFSTAkiBiNHks3sg1ILAfBiS10gyqCg0UaFBCkwy3RYKiIYMAC+RAxiQgYsJdAjw5DN2gILzEEZgVcKYuMJiEAOwAAAAAAAAAAAA==);
 }
 </style>
