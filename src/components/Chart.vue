@@ -33,7 +33,7 @@ import Chart from 'chart.js'
 
 import _ from 'lodash'
 
-//import 'chartjs-plugin-export'
+// import 'chartjs-plugin-export'
 import 'chartjs-plugin-crosshair'
 import 'chartjs-plugin-threshold'
 import 'chartjs-plugin-mobilezoom'
@@ -134,10 +134,9 @@ export default {
       }
     }, 1000)
 
-    this.requestMobileLoad = _.debounce(function() {
+    this.requestMobileLoad = _.debounce(function () {
       this.loadData(false)
     }.bind(this), 1000)
-
   },
   watch: {
     controlsVisible (val) {
@@ -204,7 +203,7 @@ export default {
                 this.chartStart = start
                 this.chartEnd = end
                 this.requestMobileLoad()
-                //this.loadData(false)
+                // this.loadData(false)
               }.bind(this),
               doubleTap: function () {
                 this.toggleMobileFullScreen()
@@ -299,7 +298,7 @@ export default {
       }
     }
 
-    if(this.type == 'bar') {
+    if (this.type == 'bar') {
       options.options.plugins.crosshair = false
     }
 
@@ -386,17 +385,16 @@ export default {
 
       // load thresholds
       for (var thresholdId in this.components.thresholds) {
-
         // copy threshold to non-watched object
         var threshold = JSON.parse(JSON.stringify(this.components.thresholds[thresholdId]))
-        var value = threshold.value 
-        if(value == null) {
+        var value = threshold.value
+        if (value == null) {
           value = await this.$pi.getValue(this.$pi.parse(threshold.path, threshold.context))
           threshold.value = value.Value
         }
-        if(threshold.value > -9999) {
+        if (threshold.value > -9999) {
           this.$options.chart.options.threshold.push(threshold)
-        }   
+        }
       }
 
       // load axis
@@ -449,9 +447,9 @@ export default {
         for (var i = 0; i < response.length; i++) {
           var val = response[i].Value
           var ts = response[i].Timestamp
-          if(val === null) { continue }
-          if(typeof(val) === 'object') {
-            if(val.IsSystem) {
+          if (val === null) { continue }
+          if (typeof (val) === 'object') {
+            if (val.IsSystem) {
               continue
             }
             val = val.Value * 24

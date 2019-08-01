@@ -63,14 +63,13 @@ export default {
             return
           }
 
-
           // check if actual path
           if (!_.startsWith(path, '\\\\')) {
             resolve(path)
             return
           }
 
-          if(webid2) {
+          if (webid2) {
             resolve(this.generateWebId2(path, 'element'))
             return
           }
@@ -179,11 +178,9 @@ export default {
         parseTime (timestr) {
           if (moment.isMoment(timestr)) {
             return timestr
-          }
-          else if (typeof timestr === 'object') {
+          } else if (typeof timestr === 'object') {
             return moment(timestr)
-          }
-          else {
+          } else {
             if (typeof timestr === 'number') {
               return moment(String(timestr) + '-01-01')
             }
@@ -222,11 +219,11 @@ export default {
           return promise
         },
 
-        getSummary (path, start = '*-1d', end = '*', interval = '1h', summarytype='Average') {
+        getSummary (path, start = '*-1d', end = '*', interval = '1h', summarytype = 'Average') {
           var promise = new Promise(
         function (resolve, reject) {
           this.getWebId(path).then(response => {
-            var url = apiUrl + '/streams/' + response + '/summary?startTime=' + this.convertTime(start) + '&endTime=' + this.convertTime(end) + '&summaryDuration=' + interval + '&summaryType=' + summarytype + '&webIDType=PathOnly&filterExpression='+"'.'>-999999"
+            var url = apiUrl + '/streams/' + response + '/summary?startTime=' + this.convertTime(start) + '&endTime=' + this.convertTime(end) + '&summaryDuration=' + interval + '&summaryType=' + summarytype + '&webIDType=PathOnly&filterExpression=' + "'.'>-999999"
             this.$http.get(url).then(response => {
               resolve(response.data.Items)
             })
@@ -317,7 +314,6 @@ export default {
           this.$options.valueBuffer = []
           this.$http.get(url).then(response => {
             for (var item of response.data.Items) {
-
               var path = this.$options.webIdMap[buffer.shift()]
               this.$options.valueBuffer = this._.without(this.$options.valueBuffer, item.WebId)
               this.$emit(path + '-value', item.Value)
@@ -402,7 +398,6 @@ export default {
               const url = apiUrl + '/attributes/' + webid + '/attributes?selectedFields=Items.WebId;Items.Name;Items.TemplateName;Items.Path;Items.HasChildren;' + fields + '&webIDType=PathOnly'
               const response = await this.$http.get(url)
               resolve(response.data.Items)
-
             } else {
               const webid = await this.getElementWebId(path)
               const url = apiUrl + '/elements/' + webid + '/attributes?selectedFields=Items.WebId;Items.Name;Items.TemplateName;Items.Path;Items.HasChildren;' + fields + '&webIDType=PathOnly'
