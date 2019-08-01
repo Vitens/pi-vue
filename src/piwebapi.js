@@ -222,11 +222,11 @@ export default {
           return promise
         },
 
-        getSummary (path, start = '*-1d', end = '*', duration = '1h', summarytype='Average') {
+        getSummary (path, start = '*-1d', end = '*', interval = '1h', summarytype='Average') {
           var promise = new Promise(
         function (resolve, reject) {
           this.getWebId(path).then(response => {
-            var url = apiUrl + '/streams/' + response + '/summary?startTime=' + this.convertTime(start) + '&endTime=' + this.convertTime(end) + '&summaryDuration=' + duration + '&summaryType=' + summarytype + '&webIDType=PathOnly'
+            var url = apiUrl + '/streams/' + response + '/summary?startTime=' + this.convertTime(start) + '&endTime=' + this.convertTime(end) + '&summaryDuration=' + interval + '&summaryType=' + summarytype + '&webIDType=PathOnly&filterExpression='+"'.'>-999999"
             this.$http.get(url).then(response => {
               resolve(response.data.Items)
             })
@@ -284,7 +284,7 @@ export default {
               this.$options.webIdMap[response] = path
               var req = this.requestAttributeValues
               req()
-              if (this.$options.valueBuffer.length > 20) {
+              if (this.$options.valueBuffer.length > 10) {
                 req.flush()
               }
             }
@@ -311,10 +311,14 @@ export default {
         batchRequestAttributeValues () {
           var url = apiUrl + '/streamsets/value?webid=' + this.$options.valueBuffer.join('&webid=') + '&webIDType=PathOnly'
       // clear buffer
+
+          var buffer = this.$options.valueBuffer
+
           this.$options.valueBuffer = []
           this.$http.get(url).then(response => {
             for (var item of response.data.Items) {
-              var path = this.$options.webIdMap[item.WebId]
+
+              var path = this.$options.webIdMap[buffer.shift()]
               this.$options.valueBuffer = this._.without(this.$options.valueBuffer, item.WebId)
               this.$emit(path + '-value', item.Value)
               this.$set(this.attributeValues, this.$options.webIdMap[item.WebId], item.Value)
@@ -324,6 +328,7 @@ export default {
 
         batchRequestAttributeWebIds () {
           var url = apiUrl + '/attributes/multiple?path=' + this.$options.pathBuffer.map(encodeURIComponent).join('&path=') + '&webIDType=PathOnly'
+          var thisRequest = this.$options.pathBuffer
           this.$options.pathBuffer = []
           this.$http.get(url).then(response => {
             for (var item of response.data.Items) {
@@ -334,6 +339,11 @@ export default {
                 this.$options.pathBuffer = this._.without(this.$options.pathBuffer, item.Identifier)
                 this.$emit(item.Identifier + '-id', item.Object.WebId)
               }
+            }
+          }, error => {
+            // error handling
+            for (var item of thisRequest) {
+              this.$emit(item + '-id', false)
             }
           })
         },

@@ -44,6 +44,17 @@ export default {
       type: Boolean,
       default: false
     },
+    summary: {
+      type: Boolean,
+      default: false
+    },
+    summaryInterval: {
+      type: String,
+      default: '1 month'
+    },
+    summaryType: {
+      default: 'total'
+    },
     interpolated: {
       type: Boolean,
       default: false
@@ -71,7 +82,10 @@ export default {
         stepped: this.stepped,
         path: this.pipath,
         recorded: this.recorded,
-        interpolated: this.interpolated
+        interpolated: this.interpolated,
+        summary: this.summary,
+        summary_interval: this.summaryInterval,
+        summary_type: this.summaryType
       }
     }
   },

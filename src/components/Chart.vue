@@ -33,8 +33,7 @@ import Chart from 'chart.js'
 
 import _ from 'lodash'
 
-import 'chartjs-plugin-export'
-
+//import 'chartjs-plugin-export'
 import 'chartjs-plugin-crosshair'
 import 'chartjs-plugin-threshold'
 import 'chartjs-plugin-mobilezoom'
@@ -94,7 +93,7 @@ export default {
     },
     maintainAspectRatio: {
       type: Boolean,
-      default:  !/Mobi/.test(navigator.userAgent)
+      default: !/Mobi/.test(navigator.userAgent)
     },
     tooltips: {
       type: Boolean,
@@ -111,6 +110,10 @@ export default {
     legend: {
       type: String,
       default: 'none'
+    },
+    type: {
+      type: String,
+      default: 'scatter'
     }
   },
 
@@ -130,6 +133,11 @@ export default {
         this.loadData()
       }
     }, 1000)
+
+    this.requestMobileLoad = _.debounce(function() {
+      this.loadData(false)
+    }.bind(this), 1000)
+
   },
   watch: {
     controlsVisible (val) {
@@ -180,7 +188,7 @@ export default {
     this.chartEnd = this.end
 
     var options = {
-      type: 'scatter',
+      type: this.type,
       plugins: [legendPlugin],
 
       options: {
@@ -192,13 +200,13 @@ export default {
         plugins: {
           mobilezoom: {
             callbacks: {
-              afterZoomPan: function(start, end) {
-                console.log(start, end)
+              afterZoomPan: function (start, end) {
                 this.chartStart = start
                 this.chartEnd = end
-                this.loadData(false)
+                this.requestMobileLoad()
+                //this.loadData(false)
               }.bind(this),
-              doubleTap: function() {
+              doubleTap: function () {
                 this.toggleMobileFullScreen()
               }.bind(this)
             }
@@ -230,7 +238,7 @@ export default {
         tooltips: {
           enabled: this.tooltips,
           intersect: false,
-          mode: 'interpolate',
+          mode: (this.type == 'scatter') ? 'interpolate' : 'index',
           position: 'average',
           callbacks: {
             title: function (a, d) {
@@ -291,13 +299,16 @@ export default {
       }
     }
 
+    if(this.type == 'bar') {
+      options.options.plugins.crosshair = false
+    }
+
     // check for mobile
     if (/Mobi/.test(navigator.userAgent) == false) {
       options.options.plugins.mobilezoom = false
     } else {
       options.options.plugins.crosshair = false
     }
-
 
     this.$nextTick(function () {
       var ctx = document.getElementById(this.uid)
@@ -311,11 +322,10 @@ export default {
   },
 
   methods: {
-    toggleMobileFullScreen() {
-
-      if(this.isFullscreen) {
-        this.$refs.container.style.height = this.$options.height + "px"
-      } else{
+    toggleMobileFullScreen () {
+      if (this.isFullscreen) {
+        this.$refs.container.style.height = this.$options.height + 'px'
+      } else {
         this.$options.height = this.$refs.container.clientHeight
         this.$refs.container.style.height = null
       }
@@ -349,10 +359,11 @@ export default {
     },
 
     async loadData (reset = true) {
+      console.log('trigger')
       if (!this.$options.chart) {
         return
       }
-      if(!this.loading) {
+      if (!this.loading) {
         this.updating = true
       }
 
@@ -375,7 +386,17 @@ export default {
 
       // load thresholds
       for (var thresholdId in this.components.thresholds) {
-        this.$options.chart.options.threshold.push(this.components.thresholds[thresholdId])
+
+        // copy threshold to non-watched object
+        var threshold = JSON.parse(JSON.stringify(this.components.thresholds[thresholdId]))
+        var value = threshold.value 
+        if(value == null) {
+          value = await this.$pi.getValue(this.$pi.parse(threshold.path, threshold.context))
+          threshold.value = value.Value
+        }
+        if(threshold.value > -9999) {
+          this.$options.chart.options.threshold.push(threshold)
+        }   
       }
 
       // load axis
@@ -397,6 +418,8 @@ export default {
         const path = this.components.series[objectId].path
         if (this.components.series[objectId].interpolated) {
           requests.push(this.$pi.getInterpolated(path, this.chartStart, this.chartEnd, '300s'))
+        } else if (this.components.series[objectId].summary) {
+          requests.push(this.$pi.getSummary(path, this.chartStart, this.chartEnd, this.components.series[objectId].summary_interval, 'Total'))
         } else if (this.components.series[objectId].recorded) {
           requests.push(this.$pi.getRecorded(path, this.chartStart, this.chartEnd))
         } else {
@@ -424,9 +447,19 @@ export default {
         }
 
         for (var i = 0; i < response.length; i++) {
-          const val = response[i].Value
+          var val = response[i].Value
+          var ts = response[i].Timestamp
+          if(val === null) { continue }
+          if(typeof(val) === 'object') {
+            if(val.IsSystem) {
+              continue
+            }
+            val = val.Value * 24
+            ts = response[i].Value.Timestamp
+          }
+
           seriesData.push({
-            x: new Date(response[i].Timestamp),
+            x: new Date(ts),
             y: val
           })
         }
@@ -458,10 +491,11 @@ export default {
           this.$options.chart.data.datasets.push(newDataset)
         }
       }
+
       this.loading = false
       this.updating = false
 
-      this.$options.chart.update()
+      this.$options.chart.update(0)
     }
   }
 
@@ -472,6 +506,7 @@ export default {
   background: #FFF;
   border: 1px solid #AAA;
   position: relative;
+  touch-action: pan-x pinch-zoom;
 }
 .pi-chart .reset-zoom {
   position: absolute;

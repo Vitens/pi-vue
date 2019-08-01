@@ -15,7 +15,16 @@ export default {
     mode: {
       type: String,
       default: 'ge'
+    },
+    path: {
+      type: String,
+      default: ''
+    },
+    context: {
+      type: String,
+      default: ''
     }
+
   },
   computed: {
 
@@ -23,7 +32,8 @@ export default {
       return {
         type: 'threshold',
         value: this.value,
-        path: this.pipath,
+        path: this.path,
+        context: this.context,
         color: this.color,
         mode: this.mode
       }
