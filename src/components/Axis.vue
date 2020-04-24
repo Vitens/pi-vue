@@ -30,9 +30,20 @@ export default {
     suggestedMax: {
       type: Number,
       default: undefined
+    },
+    stacked: {
+      type: Boolean,
+      default: false
     }
   },
   computed: {
+
+    chartStart() {
+      return this.$parent.chartStart
+    },
+    chartEnd() {
+      return this.$parent.chartEnd
+    },
 
     data () {
       return {
@@ -43,6 +54,7 @@ export default {
           display: this.label !== false,
           labelString: this.label
         },
+        stacked: this.stacked,
         ticks: {
           min: this.min,
           max: this.max,
@@ -54,27 +66,35 @@ export default {
   },
   watch: {
     data () {
-      this.$parent.$emit('update', this._uid, this.data)
+      this.$parent.$emit('update', this._uid, this.data, 'axis')
     }
   },
   created () {
     // passthrough updates from underlying elements
-    this.$on('update', function (uid, data) {
-      if (data.type === 'trend') {
+    this.$on('loading', function (uid, type) {
+      this.$parent.$emit('loading', uid, type)
+    })
+    this.$on('finish', function (uid, type) {
+      this.$parent.$emit('finish', uid, type)
+    })
+
+    this.$on('update', function (uid, data, type) {
+      if (type === 'trend') {
         data.yAxisID = 'y-axis-' + this._uid
       }
+      this.$parent.$emit('update', uid, data, type)
 
-      this.$parent.$emit('update', uid, data)
     }.bind(this))
-    this.$on('delete', function (uid, data) {
-      this.$parent.$emit('delete', uid, data)
+
+    this.$on('delete', function (uid, data, type) {
+      this.$parent.$emit('delete', uid, data, type)
     }.bind(this))
   },
   mounted () {
-    this.$parent.$emit('update', this._uid, this.data)
+    this.$parent.$emit('update', this._uid, this.data, 'axis')
   },
   beforeDestroy () {
-    this.$parent.$emit('delete', this._uid, this.data)
+    this.$parent.$emit('delete', this._uid, this.data, 'axis')
   }
 }
 </script>

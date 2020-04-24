@@ -15,6 +15,8 @@ export default {
     context: { default: '', type: String },
     units: { default: '', type: String },
     precision: { default: 2, type: Number },
+    conversion: { default: 1, type: Number },
+    locale: {default : false, type: Boolean},
     static: Boolean
   },
   data () {
@@ -42,7 +44,7 @@ export default {
 
         var value = await this.$pi.getValue(path, this.static)
         if (!value.Good || value.Value === -99999) {
-          value.Value = 'No Data'
+          value.Value = '-'
         }
         if (typeof (value.Value) === 'object') {
           value.Value = value.Value.Name
@@ -67,7 +69,8 @@ export default {
       if (isNaN(this.value.Value) || this.value.Value == '') {
         return this.value.Value
       } else {
-        return parseFloat(this.value.Value).toFixed(this.precision)
+        let val = (parseFloat(this.value.Value)*this.conversion)
+        return this.locale ? val.toLocaleString('nl-NL', {minimumFractionDigits: this.precision, maximumFractionDigits: this.precision}) : val.toFixed(this.precision)
       }
     },
     displayUnits () {

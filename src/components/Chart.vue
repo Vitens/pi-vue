@@ -48,9 +48,12 @@ const legendPlugin = {
         chart.legendHovered = false
         chart.lasthovered = -1
         for (var index = 0; index < chart.config.data.datasets.length; index++) {
-          chart.config.data.datasets[index].backgroundColor = chart.config.data.datasets[index].originalColor
+          chart.config.data.datasets[index].backgroundColor = chart.config.data.datasets[index].originalColor.backgroundColor
+          chart.config.data.datasets[index].pointBackgroundColor = chart.config.data.datasets[index].originalColor.pointBackgroundColor
+          chart.config.data.datasets[index].pointBorderColor = chart.config.data.datasets[index].originalColor.pointBorderColor
+          chart.config.data.datasets[index].borderColor = chart.config.data.datasets[index].originalColor.borderColor
         }
-        chart.update()
+        chart.update(0)
       }
     }
   },
@@ -67,8 +70,8 @@ export default {
       zoomed: false,
       chart: null,
       isFullscreen: false,
+      loadingIds: [],
       loading: true,
-      updating: false,
       chartStart: '',
       chartEnd: '',
       uid: '',
@@ -80,11 +83,11 @@ export default {
   },
   props: {
     start: {
-      type: [String, Number],
+      type: [String, Number, Object],
       default: '*-24h'
     },
     end: {
-      type: [String, Number],
+      type: [String, Number, Object],
       default: '*'
     },
     responsive: {
@@ -114,12 +117,28 @@ export default {
     type: {
       type: String,
       default: 'scatter'
+    },
+    stacked: {
+      type: Boolean,
+      default: false
+    }
+  },
+  computed: {
+    updating() {
+      return this.loadingIds.length > 0
     }
   },
 
   created () {
     this.$on('update', this.updateData)
     this.$on('delete', this.deleteData)
+    this.$on('loading', function(uid) {
+      this.loadingIds.push(uid)
+    }.bind(this))
+    this.$on('finish', function(uid) {
+      this.loadingIds = this.loadingIds.filter(function(value) { return value != uid })
+    }.bind(this))
+
     // set request load debounce function
 
     this.requestLoad = _.debounce(function () {
@@ -135,7 +154,7 @@ export default {
     }, 1000)
 
     this.requestMobileLoad = _.debounce(function () {
-      this.loadData(false)
+
     }.bind(this), 1000)
   },
   watch: {
@@ -166,6 +185,13 @@ export default {
     end (val) {
       this.requestLoad()
     },
+    title(val) {
+      this.$options.chart.options.title = {
+          display: this.title !== '',
+          text: this.title
+        }
+      this.$options.chart.update()
+    },
     min (val) {
       this.$options.chart.options.scales.yAxes[0].ticks.min = val
       this.$options.chart.update()
@@ -176,7 +202,8 @@ export default {
     },
     components: {
       handler: function (newVal) {
-        this.requestLoad()
+        //this.requestLoad()
+        this.loadData()
       },
       deep: true
     }
@@ -225,7 +252,7 @@ export default {
               afterZoom: function (start, end) {
                 this.chartStart = start
                 this.chartEnd = end
-                this.loadData(false)
+                //this.loadData(false)
               }.bind(this)
             }
           }
@@ -270,17 +297,30 @@ export default {
             ci.lasthovered = hoveredDatasetIndex
             for (var index = 0; index < ci.config.data.datasets.length; index++) {
               if (!ci.config.data.datasets[index].originalColor) {
-                ci.config.data.datasets[index].originalColor = ci.config.data.datasets[index].backgroundColor
+                ci.config.data.datasets[index].originalColor = {
+                  backgroundColor: ci.config.data.datasets[index].backgroundColor,
+                  borderColor: ci.config.data.datasets[index].borderColor,
+                  pointBackgroundColor: ci.config.data.datasets[index].pointBackgroundColor,
+                  pointBorderColor: ci.config.data.datasets[index].pointBorderColor
+                }
               }
               ci.config.data.datasets[index].backgroundColor = 'rgba(0,0,0,0.025)'
+              ci.config.data.datasets[index].borderColor = 'rgba(0,0,0,0.025)'
+              ci.config.data.datasets[index].pointBackgroundColor = 'rgba(0,0,0,0.025)'
+              ci.config.data.datasets[index].pointBorderColor = 'rgba(0,0,0,0.025)'
             }
-            ci.config.data.datasets[hoveredDatasetIndex].backgroundColor = ci.config.data.datasets[hoveredDatasetIndex].originalColor
+            ci.config.data.datasets[hoveredDatasetIndex].borderColor = ci.config.data.datasets[hoveredDatasetIndex].originalColor.borderColor
+            ci.config.data.datasets[hoveredDatasetIndex].backgroundColor = ci.config.data.datasets[hoveredDatasetIndex].originalColor.backgroundColor
+            ci.config.data.datasets[hoveredDatasetIndex].pointBackgroundColor = ci.config.data.datasets[hoveredDatasetIndex].originalColor.pointBackgroundColor
+            ci.config.data.datasets[hoveredDatasetIndex].pointBorderColor = ci.config.data.datasets[hoveredDatasetIndex].originalColor.pointBorderColor
             ci.legendHovered = true
-            ci.update()
+
+            ci.update(0)
           }
         },
         scales: {
           xAxes: [{
+            stacked: this.stacked,
             type: 'time',
             time: {
               displayFormats: {
@@ -298,7 +338,7 @@ export default {
       }
     }
 
-    if (this.type == 'bar') {
+    if (this.type != 'scatter') {
       options.options.plugins.crosshair = false
     }
 
@@ -337,43 +377,32 @@ export default {
 
     requestLoad () {},
 
-    updateData (uid, data) {
-      if (data.type == 'trend') {
+    updateData (uid, data, type) {
+      if (type == 'trend') {
         this.$set(this.components.series, String(uid), data)
-      } else if (data.type == 'threshold') {
+      } else if (type == 'threshold') {
         this.$set(this.components.thresholds, String(uid), data)
       } else {
         this.$set(this.components.axis, String(uid), data)
       }
     },
 
-    deleteData (uid, data) {
-      if (data.type === 'trend') {
+    deleteData (uid, data, type) {
+      if (type === 'trend') {
         this.$delete(this.components.series, String(uid))
-      } else if (data.type == 'theshold') {
+      } else if (type == 'threshold') {
         this.$delete(this.components.thresholds, String(uid))
       } else {
         this.$delete(this.components.axis, String(uid))
       }
     },
 
-    async loadData (reset = true) {
-      console.log('trigger')
+    async loadData () {
       if (!this.$options.chart) {
         return
       }
-      if (!this.loading) {
-        this.updating = true
-      }
 
       this.$options.chart.stop()
-
-      if (reset) {
-        this.$options.chart.data.datasets = []
-        this.$options.chart.options.threshold = []
-        this.$options.chart.options.scales.yAxes = []
-        this.$options.chart.update()
-      }
 
       // set scale
       this.$options.chart.options.scales.xAxes[0].time.min = this.$pi.parseTime(this.chartStart)
@@ -383,18 +412,8 @@ export default {
       this.$options.chart.options.title.display = this.title !== ''
       this.$options.chart.options.title.text = this.title
 
-      // load thresholds
-      for (var thresholdId in this.components.thresholds) {
-        // copy threshold to non-watched object
-        var threshold = JSON.parse(JSON.stringify(this.components.thresholds[thresholdId]))
-        var value = threshold.value
-        if (value == null) {
-          value = await this.$pi.getValue(this.$pi.parse(threshold.path, threshold.context))
-          threshold.value = value.Value
-        }
-        if (threshold.value > -9999) {
-          this.$options.chart.options.threshold.push(threshold)
-        }
+      if(this.components.axis.length > 0) {
+        this.$options.chart.options.scales.yAxes = []
       }
 
       // load axis
@@ -406,92 +425,40 @@ export default {
         this.$options.chart.options.scales.yAxes[0].display = false
       }
 
-      // use a request token to check if we need to cancel this method as Promises cannot really be cancelled (yet)
+      // load thresholds
+      this.$options.chart.options.threshold = []
 
-      var requestToken = Math.random()
-      this.$options.requestToken = requestToken
+      for (var thresholdId in this.components.thresholds) {
+        // copy threshold to non-watched object
+        var threshold = JSON.parse(JSON.stringify(this.components.thresholds[thresholdId]))
+        if (threshold.value > -9999 && threshold.value !== null) {
+          this.$options.chart.options.threshold.push(threshold)
+          if(threshold.setMax) {
+            var yscale = this.$options.chart.options.scales.yAxes[1]
 
-      var requests = []
-      for (var objectId in this.components.series) {
-        const path = this.components.series[objectId].path
-        if (this.components.series[objectId].interpolated) {
-          requests.push(this.$pi.getInterpolated(path, this.chartStart, this.chartEnd, '300s'))
-        } else if (this.components.series[objectId].summary) {
-          requests.push(this.$pi.getSummary(path, this.chartStart, this.chartEnd, this.components.series[objectId].summary_interval, 'Total'))
-        } else if (this.components.series[objectId].recorded) {
-          requests.push(this.$pi.getRecorded(path, this.chartStart, this.chartEnd))
-        } else {
-          requests.push(this.$pi.getPlot(path, this.chartStart, this.chartEnd, 150))
-        }
-      }
-
-      var responses = await Promise.all(requests)
-      // check local requestToken with global requesttoken, if mismatch, cancel request
-      if (requestToken != this.$options.requestToken) {
-        return
-      }
-
-      for (var objectId in this.components.series) {
-        const series = this.components.series[objectId]
-
-        const seriesData = []
-
-        const path = this.components.series[objectId].path
-
-        const response = responses.shift()
-
-        if (!response) {
-          continue
-        }
-
-        for (var i = 0; i < response.length; i++) {
-          var val = response[i].Value
-          var ts = response[i].Timestamp
-          if (val === null) { continue }
-          if (typeof (val) === 'object') {
-            if (val.IsSystem) {
-              continue
+            if(threshold.value > 1e6) {
+              var scalemax = Math.round(threshold.value/1e6)*1e6 + 5e5
+            } else {
+              var scalemax = Math.round(threshold.value/1e5)*1e5+ 5e4
             }
-            val = val.Value * 24
-            ts = response[i].Value.Timestamp
+
+            yscale.ticks.suggestedMax = scalemax
           }
-
-          seriesData.push({
-            x: new Date(ts),
-            y: val
-          })
-        }
-
-        var newDataset = {
-          label: series.label,
-          borderColor: series.color,
-          backgroundColor: series.color,
-          data: seriesData,
-          borderWidth: series.width,
-          pointRadius: series.markersize,
-          pointStyle: series.marker,
-          fill: false,
-          objectId: objectId,
-          showLine: series.line,
-          interpolate: series.line,
-          steppedLine: series.stepped,
-          yAxisID: series.yAxisID
-        }
-
-        if (!reset) {
-          for (var index in this.$options.chart.data.datasets) {
-            var dataset = this.$options.chart.data.datasets[index]
-            if (dataset.objectId === objectId) {
-              this.$options.chart.data.datasets[index] = newDataset
-            }
-          }
-        } else {
-          this.$options.chart.data.datasets.push(newDataset)
         }
       }
+
+      // load datasets
+      this.$options.chart.data.datasets = []
+
+      for (var seriesId in this.components.series) {
+        var series = Object.assign({}, this.components.series[seriesId])
+        this.$options.chart.data.datasets.push(series)
+      }
+
+      this.$options.chart.data.datasets.sort((a,b) => a.order - b.order)
+
 
       this.loading = false
-      this.updating = false
 
       this.$options.chart.update(0)
     }

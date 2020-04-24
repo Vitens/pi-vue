@@ -43,6 +43,12 @@ export default {
       },
 
       methods: {
+        b64EncodeUnicode(str) {
+            return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,
+              function toSolidBytes(match, p1) {
+              return String.fromCharCode('0x' + p1);
+            }));
+        },
 
         generateWebId2 (path, type) {
           var webid = 'P1'
@@ -51,7 +57,7 @@ export default {
           } else if (type === 'attribute') {
             webid += 'AbE'
           }
-          webid += btoa(path.substring(2).toUpperCase()).replace(/=/g, '')
+          webid += this.b64EncodeUnicode(path.substring(2).toUpperCase()).replace(/=/g, '')
           return webid
         },
 
@@ -369,18 +375,90 @@ export default {
           return this.context
         },
 
-        getChildren (path) {
+        getAttributeTree(path, categoryFilter=null) {
           var promise = new Promise(async function (resolve, reject) {
-            var cachePath = path + '-children'
+            var webid = await this.getAttributeWebId(path)
+            var url = apiUrl + '/streamsets/' + webid + '/value?webIDType=PathOnly&searchFullHierarchy=true'
+            if (categoryFilter) {
+              url += "&categoryName="+encodeURIComponent(categoryFilter)
+            }
+            const response = await this.$http.get(url)
+            var items = response.data.Items
+
+            var root = /\|(?<tag>.+)/g.exec(path)[1]
+
+            var flatmap = {}
+            // create flatmap of all paths and values
+            for(var item of items) {
+              flatmap[/\|(.*)/g.exec(item.Path)[1]] = item
+            }
+            let keys = Object.keys(flatmap).sort()
+
+            var tree = {}
+            tree[root] = {name: root, value: false, path: false, webid: false, c: {}}
+
+            var tmp
+
+
+            for(var key of keys) {
+              tmp = tree
+              var length = key.split("|").length
+              var index = 1
+
+              for(var sub of key.split("|")) {
+                
+                if(sub in tmp) { 
+                  tmp = tmp[sub].c 
+                } else {
+                  tmp[sub] = {name: sub, value: flatmap[key].Value, path: flatmap[key].Path, webid: flatmap[key].WebId, c: {}}
+                }
+                index++
+              }
+            }
+
+            resolve(tree)
+
+
+          }.bind(this))
+
+          return promise
+
+
+        },
+
+        getElements(path, direct=true, templateFilter=null, categoryFilter=null, sortField=null) {
+          return this.getChildren(path, direct, templateFilter, categoryFilter, sortField)
+        },
+        getChildren (path, direct=true, templateFilter=null, categoryFilter=null, sortField=null) {
+
+
+          var promise = new Promise(async function (resolve, reject) {
+            var cachePath = path + '-children'+direct+templateFilter
             if (cachePath in this.$options.valueCache) {
               resolve(this.$options.valueCache[cachePath])
               return
             }
             const webid = await this.getElementWebId(path)
-            const url = apiUrl + '/elements/' + webid + '/elements?selectedFields=Items.WebId;Items.Name;Items.TemplateName;Items.Path;Items.HasChildren;' + '&webIDType=PathOnly'
+            var url = apiUrl + '/elements/' + webid + '/elements?selectedFields=Items.WebId;Items.Name;Items.TemplateName;Items.Path;Items.HasChildren;Items.Description;Items.ExtendedProperties' + '&webIDType=PathOnly'
+            if(!direct) {
+              url += "&searchFullHierarchy=true"
+            }
+            if(templateFilter !== null) {
+              url += "&templateName="+encodeURIComponent(templateFilter)
+            }
+            if(categoryFilter !== null) {
+              url += "&categoryName="+encodeURIComponent(categoryFilter)
+            }
             const response = await this.$http.get(url)
-            this.$options.valueCache[cachePath] = response.data.Items
-            resolve(response.data.Items)
+
+            var items = response.data.Items
+
+            if(sortField !== null) {
+              var items = _.sortBy(items, sortField)
+            }
+
+            this.$options.valueCache[cachePath] = items
+            resolve(items)
           }.bind(this))
 
           return promise

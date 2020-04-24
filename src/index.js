@@ -33,13 +33,16 @@ export function install (Vue, options) {
     url: '/piwebapi',
     auth_header: '',
     defeat_cache: true,
-    webid2: true
+    webid2: true,
+    with_credentials: false,
   }
 
   options = assign(DEFAULT_OPTIONS, options)
   if (options['auth_header'] !== '') {
     axios.defaults.headers.common['Authorization'] = options['auth_header']
   }
+  axios.defaults.withCredentials = options['with_credentials']
+  console.log('axios with credentials', axios.defaults.withCredentials)
 
   const VueLodash = {
     install (Vue) {
