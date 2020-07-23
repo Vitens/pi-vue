@@ -16,7 +16,7 @@ export default {
     units: { default: '', type: String },
     precision: { default: 2, type: Number },
     conversion: { default: 1, type: Number },
-    locale: {default : false, type: Boolean},
+    locale: { default: false, type: Boolean },
     static: Boolean
   },
   data () {
@@ -69,8 +69,8 @@ export default {
       if (isNaN(this.value.Value) || this.value.Value == '') {
         return this.value.Value
       } else {
-        let val = (parseFloat(this.value.Value)*this.conversion)
-        return this.locale ? val.toLocaleString('nl-NL', {minimumFractionDigits: this.precision, maximumFractionDigits: this.precision}) : val.toFixed(this.precision)
+        const val = (parseFloat(this.value.Value) * this.conversion)
+        return this.locale ? val.toLocaleString('nl-NL', { minimumFractionDigits: this.precision, maximumFractionDigits: this.precision }) : val.toFixed(this.precision)
       }
     },
     displayUnits () {

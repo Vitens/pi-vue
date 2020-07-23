@@ -9,6 +9,8 @@ import Tree from './components/Tree.vue'
 
 import PIWebAPI from './piwebapi.js'
 
+import 'chartjs-chart-matrix'
+
 import AsyncComputed from 'vue-async-computed'
 import axios from 'axios'
 
@@ -29,20 +31,24 @@ function assign (target, source) { // eslint-disable-line no-unused-vars
 
 // Install the components
 export function install (Vue, options) {
+
+  console.log('initializing install')
+
   const DEFAULT_OPTIONS = {
     url: '/piwebapi',
     auth_header: '',
     defeat_cache: true,
     webid2: true,
-    with_credentials: false,
+    with_credentials: false
   }
 
   options = assign(DEFAULT_OPTIONS, options)
   if (options['auth_header'] !== '') {
     axios.defaults.headers.common['Authorization'] = options['auth_header']
   }
+
   axios.defaults.withCredentials = options['with_credentials']
-  console.log('axios with credentials', axios.defaults.withCredentials)
+  axios.defaults.timeout = 10000
 
   const VueLodash = {
     install (Vue) {

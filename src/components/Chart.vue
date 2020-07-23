@@ -1,5 +1,5 @@
 <template>
-  <div class='pi-chart' @dblclick="isFullscreen = !isFullscreen" :class="{fullscreen: isFullscreen}" ref="container">
+  <div class='pi-chart' @dblclick="isFullscreen = !isFullscreen" :class="{fullscreen: isFullscreen, loading: loading}" ref="container">
 
     <div class='pi-updating' v-show='updating'></div>
 
@@ -22,7 +22,7 @@
     <transition name='fade'>
       <div class='pi-loading' v-show='loading'></div>
     </transition>
-      <canvas :id='uid'></canvas>
+      <canvas :id='uid' ref='canvas'></canvas>
     <!-- fake slot -->
     <slot></slot>
   </div>
@@ -36,31 +36,7 @@ import _ from 'lodash'
 // import 'chartjs-plugin-export'
 import 'chartjs-plugin-crosshair'
 import 'chartjs-plugin-threshold'
-import 'chartjs-plugin-mobilezoom'
-
-const legendPlugin = {
-  id: 'legendPlugin',
-  afterEvent: function (chart, e) {
-    if (chart.legendHovered) {
-      var meta = chart.getDatasetMeta(0)
-      var yScale = chart.scales[meta.yAxisID]
-      if (e.y > yScale.getPixelForValue(yScale.max)) {
-        chart.legendHovered = false
-        chart.lasthovered = -1
-        for (var index = 0; index < chart.config.data.datasets.length; index++) {
-          chart.config.data.datasets[index].backgroundColor = chart.config.data.datasets[index].originalColor.backgroundColor
-          chart.config.data.datasets[index].pointBackgroundColor = chart.config.data.datasets[index].originalColor.pointBackgroundColor
-          chart.config.data.datasets[index].pointBorderColor = chart.config.data.datasets[index].originalColor.pointBorderColor
-          chart.config.data.datasets[index].borderColor = chart.config.data.datasets[index].originalColor.borderColor
-        }
-        chart.update(0)
-      }
-    }
-  },
-  beforeTooltipDraw: function (chart) {
-    return !chart.legendHovered
-  }
-}
+// import 'chartjs-plugin-mobilezoom'
 
 export default {
   data () {
@@ -71,7 +47,7 @@ export default {
       chart: null,
       isFullscreen: false,
       loadingIds: [],
-      loading: true,
+      loading: false,
       chartStart: '',
       chartEnd: '',
       uid: '',
@@ -121,10 +97,18 @@ export default {
     stacked: {
       type: Boolean,
       default: false
+    },
+    fontColor: {
+      type: String,
+      default: '#333'
+    },
+    grid: {
+      type: Boolean,
+      default: true
     }
   },
   computed: {
-    updating() {
+    updating () {
       return this.loadingIds.length > 0
     }
   },
@@ -132,11 +116,11 @@ export default {
   created () {
     this.$on('update', this.updateData)
     this.$on('delete', this.deleteData)
-    this.$on('loading', function(uid) {
+    this.$on('loading', function (uid) {
       this.loadingIds.push(uid)
     }.bind(this))
-    this.$on('finish', function(uid) {
-      this.loadingIds = this.loadingIds.filter(function(value) { return value != uid })
+    this.$on('finish', function (uid) {
+      this.loadingIds = this.loadingIds.filter(function (value) { return value != uid })
     }.bind(this))
 
     // set request load debounce function
@@ -151,11 +135,11 @@ export default {
         }
         this.loadData()
       }
-    }, 1000)
+    }, 300)
 
     this.requestMobileLoad = _.debounce(function () {
 
-    }.bind(this), 1000)
+    }, 1000)
   },
   watch: {
     controlsVisible (val) {
@@ -180,16 +164,20 @@ export default {
       this.$options.chart.update()
     },
     start (val) {
+      this.$options.chart.options.scales.xAxes[0].ticks.min = this.$pi.parseTime(val)
+      this.$options.chart.update()
       this.requestLoad()
     },
     end (val) {
+      this.$options.chart.options.scales.xAxes[0].ticks.max = this.$pi.parseTime(val)
+      this.$options.chart.update()
       this.requestLoad()
     },
-    title(val) {
+    title (val) {
       this.$options.chart.options.title = {
-          display: this.title !== '',
-          text: this.title
-        }
+        display: this.title !== '',
+        text: this.title
+      }
       this.$options.chart.update()
     },
     min (val) {
@@ -200,9 +188,14 @@ export default {
       this.$options.chart.options.scales.yAxes[0].ticks.max = val
       this.$options.chart.update()
     },
+    legend(val) {
+      this.$options.chart.options.legend.display = val !== 'none'
+      this.$options.chart.options.legend.position = val
+      this.$options.chart.update()
+    },
     components: {
       handler: function (newVal) {
-        //this.requestLoad()
+        // this.requestLoad()
         this.loadData()
       },
       deep: true
@@ -215,9 +208,12 @@ export default {
 
     var options = {
       type: this.type,
-      plugins: [legendPlugin],
+      //plugins: [legendPlugin],
 
       options: {
+        layout: {
+          padding: 0
+        },
         animation: false,
         title: {
           display: this.title !== '',
@@ -250,9 +246,7 @@ export default {
                 return true
               },
               afterZoom: function (start, end) {
-                this.chartStart = start
-                this.chartEnd = end
-                //this.loadData(false)
+                this.$emit('zoom', {start:start, end:end})
               }.bind(this)
             }
           }
@@ -262,7 +256,7 @@ export default {
         maintainAspectRatio: this.maintainAspectRatio,
         showLines: true,
         tooltips: {
-          enabled: this.tooltips,
+          enabled: false,
           intersect: false,
           mode: (this.type == 'scatter') ? 'interpolate' : 'index',
           position: 'average',
@@ -287,47 +281,30 @@ export default {
         legend: {
           display: this.legend !== 'none',
           position: this.legend,
-          onHover: function (event, legendItem) {
-            var ci = this.chart
-            var hoveredDatasetIndex = legendItem.datasetIndex
-            if (ci.lasthovered === hoveredDatasetIndex) {
-              return
-            }
-
-            ci.lasthovered = hoveredDatasetIndex
-            for (var index = 0; index < ci.config.data.datasets.length; index++) {
-              if (!ci.config.data.datasets[index].originalColor) {
-                ci.config.data.datasets[index].originalColor = {
-                  backgroundColor: ci.config.data.datasets[index].backgroundColor,
-                  borderColor: ci.config.data.datasets[index].borderColor,
-                  pointBackgroundColor: ci.config.data.datasets[index].pointBackgroundColor,
-                  pointBorderColor: ci.config.data.datasets[index].pointBorderColor
-                }
-              }
-              ci.config.data.datasets[index].backgroundColor = 'rgba(0,0,0,0.025)'
-              ci.config.data.datasets[index].borderColor = 'rgba(0,0,0,0.025)'
-              ci.config.data.datasets[index].pointBackgroundColor = 'rgba(0,0,0,0.025)'
-              ci.config.data.datasets[index].pointBorderColor = 'rgba(0,0,0,0.025)'
-            }
-            ci.config.data.datasets[hoveredDatasetIndex].borderColor = ci.config.data.datasets[hoveredDatasetIndex].originalColor.borderColor
-            ci.config.data.datasets[hoveredDatasetIndex].backgroundColor = ci.config.data.datasets[hoveredDatasetIndex].originalColor.backgroundColor
-            ci.config.data.datasets[hoveredDatasetIndex].pointBackgroundColor = ci.config.data.datasets[hoveredDatasetIndex].originalColor.pointBackgroundColor
-            ci.config.data.datasets[hoveredDatasetIndex].pointBorderColor = ci.config.data.datasets[hoveredDatasetIndex].originalColor.pointBorderColor
-            ci.legendHovered = true
-
-            ci.update(0)
-          }
         },
         scales: {
           xAxes: [{
             stacked: this.stacked,
             type: 'time',
+            gridLines: {
+              display: this.grid
+            },
             time: {
               displayFormats: {
                 hour: 'HH:mm',
                 minute: 'HH:mm'
               },
               tooltipFormat: 'dd. D MMM HH:mm:ss'
+            },
+            ticks: {
+              major: {
+                enabled: true,
+                fontStyle: 'bold'
+              },
+              fontColor: this.fontColor,
+              autoSkip: true,
+              autoSkipPadding: 15,
+              maxRotation: 0,
             }
           }],
           yAxes: []
@@ -349,11 +326,8 @@ export default {
       options.options.plugins.crosshair = false
     }
 
-    this.$nextTick(function () {
-      var ctx = document.getElementById(this.uid)
-      this.$options.chart = new Chart(ctx, options)
-      // this.requestLoad()
-    })
+    var ctx = this.$refs.canvas
+    this.$options.chart = new Chart(ctx, options)
   },
   beforeDestroy () {
     // cleanup chart
@@ -384,6 +358,7 @@ export default {
         this.$set(this.components.thresholds, String(uid), data)
       } else {
         this.$set(this.components.axis, String(uid), data)
+        this.loadData()
       }
     },
 
@@ -402,17 +377,19 @@ export default {
         return
       }
 
+      this.loading = true
+
       this.$options.chart.stop()
 
       // set scale
-      this.$options.chart.options.scales.xAxes[0].time.min = this.$pi.parseTime(this.chartStart)
-      this.$options.chart.options.scales.xAxes[0].time.max = this.$pi.parseTime(this.chartEnd)
+      this.$options.chart.options.scales.xAxes[0].ticks.min = this.$pi.parseTime(this.chartStart)
+      this.$options.chart.options.scales.xAxes[0].ticks.max = this.$pi.parseTime(this.chartEnd)
 
       // set title
       this.$options.chart.options.title.display = this.title !== ''
       this.$options.chart.options.title.text = this.title
 
-      if(this.components.axis.length > 0) {
+      if (Object.keys(this.components.axis) > 0) {
         this.$options.chart.options.scales.yAxes = []
       }
 
@@ -422,7 +399,6 @@ export default {
         axis.type = 'linear'
         this.$options.chart.options.scales.yAxes.push(axis)
         // hide default axis
-        this.$options.chart.options.scales.yAxes[0].display = false
       }
 
       // load thresholds
@@ -433,16 +409,17 @@ export default {
         var threshold = JSON.parse(JSON.stringify(this.components.thresholds[thresholdId]))
         if (threshold.value > -9999 && threshold.value !== null) {
           this.$options.chart.options.threshold.push(threshold)
-          if(threshold.setMax) {
-            var yscale = this.$options.chart.options.scales.yAxes[1]
+          if (threshold.setMax) {
+            var yscale = this.$options.chart.options.scales.yAxes[0]
 
-            if(threshold.value > 1e6) {
-              var scalemax = Math.round(threshold.value/1e6)*1e6 + 5e5
+            if (threshold.value > 1e6) {
+              var scalemax = Math.round(threshold.value / 1e6) * 1e6 + 5e5
             } else {
-              var scalemax = Math.round(threshold.value/1e5)*1e5+ 5e4
+              var scalemax = Math.round(threshold.value / 1e5) * 1e5 + 5e4
             }
 
             yscale.ticks.suggestedMax = scalemax
+            //yscale.ticks.max = scalemax
           }
         }
       }
@@ -455,12 +432,12 @@ export default {
         this.$options.chart.data.datasets.push(series)
       }
 
-      this.$options.chart.data.datasets.sort((a,b) => a.order - b.order)
+      this.$options.chart.data.datasets.sort((a, b) => a.order - b.order)
 
 
       this.loading = false
 
-      this.$options.chart.update(0)
+      this.$options.chart.update()
     }
   }
 
@@ -590,5 +567,55 @@ export default {
   width: 16px;
   height: 16px;
   background: url(data:image/gif;base64,R0lGODlhEAAQAPQAAP///1hYWPr6+nx8fK6urltbW3BwcOPj48XFxWZmZqWlpZqamu3t7bu7u9nZ2YeHh5CQkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCgAAACwAAAAAEAAQAAAFUCAgjmRpnqUwFGwhKoRgqq2YFMaRGjWA8AbZiIBbjQQ8AmmFUJEQhQGJhaKOrCksgEla+KIkYvC6SJKQOISoNSYdeIk1ayA8ExTyeR3F749CACH5BAkKAAAALAAAAAAQABAAAAVoICCKR9KMaCoaxeCoqEAkRX3AwMHWxQIIjJSAZWgUEgzBwCBAEQpMwIDwY1FHgwJCtOW2UDWYIDyqNVVkUbYr6CK+o2eUMKgWrqKhj0FrEM8jQQALPFA3MAc8CQSAMA5ZBjgqDQmHIyEAIfkECQoAAAAsAAAAABAAEAAABWAgII4j85Ao2hRIKgrEUBQJLaSHMe8zgQo6Q8sxS7RIhILhBkgumCTZsXkACBC+0cwF2GoLLoFXREDcDlkAojBICRaFLDCOQtQKjmsQSubtDFU/NXcDBHwkaw1cKQ8MiyEAIfkECQoAAAAsAAAAABAAEAAABVIgII5kaZ6AIJQCMRTFQKiDQx4GrBfGa4uCnAEhQuRgPwCBtwK+kCNFgjh6QlFYgGO7baJ2CxIioSDpwqNggWCGDVVGphly3BkOpXDrKfNm/4AhACH5BAkKAAAALAAAAAAQABAAAAVgICCOZGmeqEAMRTEQwskYbV0Yx7kYSIzQhtgoBxCKBDQCIOcoLBimRiFhSABYU5gIgW01pLUBYkRItAYAqrlhYiwKjiWAcDMWY8QjsCf4DewiBzQ2N1AmKlgvgCiMjSQhACH5BAkKAAAALAAAAAAQABAAAAVfICCOZGmeqEgUxUAIpkA0AMKyxkEiSZEIsJqhYAg+boUFSTAkiBiNHks3sg1ILAfBiS10gyqCg0UaFBCkwy3RYKiIYMAC+RAxiQgYsJdAjw5DN2gILzEEZgVcKYuMJiEAOwAAAAAAAAAAAA==);
+}
+
+/* Crosshair styles  */
+.chartjs-crosshair {
+	position: absolute;
+	top: 0px;
+	bottom: 0px;
+	border-left: 1px solid red;
+	pointer-events: none;
+}
+.chartjs-tracepoint {
+	position: absolute;
+	width: 4px;
+	height: 4px;
+	margin-left: -4px;
+	margin-top: -4px;
+	background-color: white;
+	border: 2px solid black;
+	border-radius: 6px;
+	z-index: 10;
+	pointer-events: none;
+}
+.chartjs-fasttooltip {
+	position: absolute;
+	background: rgba(0,0,0,0.8);
+	z-index: 11;
+	padding: 5px;
+	color: white;
+	font-size: 12px;
+	pointer-events: none;
+	min-width: 140px;
+}
+.chartjs-zoombox {
+	position: absolute;
+	background:rgba(66,133,244,0.2);
+	border: 1px solid #48F;
+	pointer-events: none;
+}
+.chartjs-fasttooltip .tooltip-title {
+	font-weight: bold;
+	display: block;
+}
+.chartjs-fasttooltip .tooltip-result {
+	display: block;
+}
+.chartjs-fasttooltip .tooltip-result-box {
+	display: inline-block;
+	width: 10px;
+	height: 10px;
+	margin-right: 5px;
 }
 </style>

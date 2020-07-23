@@ -43,7 +43,6 @@ export default {
         this.options = []
         this.visible = false
         this.$nextTick(function() {
-          console.log('reset')
           this.visible = true
 
         }.bind(this))
@@ -64,14 +63,12 @@ export default {
         }
       } else {
         var split = this.path.split('|')
-        console.log(split)
       }
       return keys
     }
   },
   methods: {
     async loadNode (node, resolve) {
-      console.log('load!', node.level)
       if (node.level === 0) {
         if (this.mode === 'element') {
           resolve([{ Name: 'NuGreen', Path: this.keys[0], isLeaf: false }])

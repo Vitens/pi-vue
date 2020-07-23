@@ -1,6 +1,11 @@
 <template>
+<i></i>
 </template>
 <script>
+
+import _ from 'lodash'
+import downsample from '../downsample.js'
+
 export default {
   name: 'trend',
   props: {
@@ -15,6 +20,10 @@ export default {
     color: {
       type: String,
       default: '#33F'
+    },
+    backgroundColor: {
+      type: [Boolean, String],
+      default: false
     },
     width: {
       type: Number,
@@ -69,12 +78,24 @@ export default {
     },
     order: {
       type: Number,
+      default: 0
+    },
+    downsample: {
+      type: Number,
       default: 0,
+    },
+    fill: {
+      type: Boolean,
+      default: false
+    },
+    clamp: {
+      type: Boolean,
+      default: true
     }
   },
-  data() {
+  data () {
     return {
-      seriesData: []
+      seriesData: [],
     }
   },
   computed: {
@@ -85,13 +106,13 @@ export default {
         return this.$pi.parse(this.path, this.context)
       }
     },
-    dataset() {
+    dataset () {
       return {
         label: this.label,
         borderColor: this.color,
-        backgroundColor: this.color,
+        backgroundColor: this.backgroundColor ? this.backgroundColor : this.color,
         data: this.seriesData,
-        fill: false,
+        fill: this.fill,
         borderWidth: this.width,
         pointRadius: this.marker == 'none' ? 0 : this.markerSize,
         pointStyle: this.marker,
@@ -99,11 +120,12 @@ export default {
         interpolate: this.line,
         steppedLine: this.stepped,
         noThresh: this.nothresh,
-        order: this.order
+        order: this.order,
+        clamp: this.clamp,
       }
     },
 
-    reloadTrigger() {
+    reloadTrigger () {
       // props that trigger a dataset reload when mutated
       return {
         path: this.pipath,
@@ -119,25 +141,25 @@ export default {
     dataset () {
       this.$parent.$emit('update', this._uid, this.dataset, 'trend')
     },
-    reloadTrigger() {
+    reloadTrigger () {
       this.requestLoad()
     },
-    '$parent.chartStart'() {
+    '$parent.chartStart' () {
       this.requestLoad()
     },
-    '$parent.chartEnd'() {
+    '$parent.chartEnd' () {
       this.requestLoad()
     }
   },
-  created() {
-    this.requestLoad = _.debounce(function() {
+  created () {
+    this.requestLoad = _.debounce(function () {
       this.loadData()
-    }, 10)
+    }, 50)
   },
   mounted () {
     this.$parent.$emit('update', this._uid, this.dataset, 'trend')
     // wait a tick to load data to get the rest of the chart to initialize
-    this.$nextTick(function() {
+    this.$nextTick(function () {
       this.requestLoad()
     }.bind(this))
   },
@@ -145,23 +167,20 @@ export default {
     this.$parent.$emit('delete', this._uid, this.dataset, 'trend')
   },
   methods: {
-    async loadData() {
-
+    async loadData () {
       this.$parent.$emit('loading', this._uid, 'trend')
 
-      if(this.data !== null) {
-        if(Promise.resolve(this.data) == this.data) {
+      if (this.data !== null) {
+        if (Promise.resolve(this.data) == this.data) {
           this.seriesData = await this.data
         } else {
           this.seriesData = this.data
         }
       }
 
-
       // use a request token to check if we need to cancel this method as Promises cannot really be cancelled (yet)
       var requestToken = Math.random()
       this.$options.requestToken = requestToken
-
 
       var path = this.pipath
 
@@ -193,12 +212,32 @@ export default {
           x: new Date(ts),
           y: val
         })
+
       }
 
-      this.seriesData = seriesData
+      const mean = _.meanBy(seriesData, 'y')
+
+      if(this.downsample > 0) {
+        this.seriesData = downsample(seriesData, this.downsample)
+      } else {
+        this.seriesData = seriesData
+      }
+
+
+      // remove extreme outliers
+      if(this.clamp) {
+        for(var val of seriesData) {
+          if (val.y > 10*mean) {
+            val.y = NaN
+          }
+        }
+
+      }
+
+
       this.$parent.$emit('finish', this._uid, 'trend')
     }
-  }
+  },
 }
 </script>
 <style>

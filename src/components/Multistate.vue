@@ -12,49 +12,57 @@ export default {
   props: {
     path: { default: '', type: String },
     context: { default: '', type: String },
+    value: {default: undefined, type: Number},
     colors: { default: () => [[1, 'green'], [2, 'yellow'], [3, 'orange'], [4, 'red']], type: Array }
   },
   data () {
     return {
-      loading: true,
+      loading: false,
       stateClass: '',
-      value: null
+      stateValue: null
     }
   },
   asyncComputed: {
     async calcClass () {
-      this.loading = true
       this.stateClass = ''
-      var path = this.$pi.parse(this.path, this.context)
-      try {
-        var value = await this.$pi.getValue(path, true)
 
-        if (typeof value.Value === 'object') {
-          value = value.Value.Value
-        } else {
-          value = value.Value
-        }
+      if(this.value == undefined) {
+        this.loading = true
+        var path = this.$pi.parse(this.path, this.context)
+        try {
+          var value = await this.$pi.getValue(path)
 
-        this.value = value
 
-        for (var rule of this.colors) {
-          if (value === true || value === false) {
-            if (value === rule[0]) {
-              this.stateClass = rule[1]
-              break
-            }
+          if (typeof value.Value === 'object') {
+            value = value.Value.Value
           } else {
-            if (value <= rule[0]) {
-              this.stateClass = rule[1]
-              break
-            }
+            value = value.Value
+          }
+
+          this.stateValue = value
+        }
+        catch(e) {
+          this.stateClass='error'
+        }
+      } else {
+        this.stateValue = this.value
+      }
+      this.loading = false
+
+      var value = this.stateValue
+
+      for (var rule of this.colors) {
+        if (value === true || value === false) {
+          if (value === rule[0]) {
+            this.stateClass = rule[1]
+            break
+          }
+        } else {
+          if (value <= rule[0]) {
+            this.stateClass = rule[1]
+            break
           }
         }
-        this.loading = false
-      } catch (e) {
-        this.loading = false
-        console.log(e)
-        this.stateClass = 'error'
       }
     }
   }

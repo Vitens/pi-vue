@@ -12,6 +12,9 @@ export default {
 
     Vue.prototype.$http = axios
 
+    console.log('installing piwebapi')
+    console.log(Vue.prototype.$http.defaults)
+
     Vue.prototype.$pi = new Vue({
 
       pathBuffer: [],
@@ -43,11 +46,11 @@ export default {
       },
 
       methods: {
-        b64EncodeUnicode(str) {
-            return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,
-              function toSolidBytes(match, p1) {
-              return String.fromCharCode('0x' + p1);
-            }));
+        b64EncodeUnicode (str) {
+          return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,
+              function toSolidBytes (match, p1) {
+                return String.fromCharCode('0x' + p1)
+              }))
         },
 
         generateWebId2 (path, type) {
@@ -155,7 +158,7 @@ export default {
 
           var request = this.requestAttributeWebIds
           request()
-          if (this.$options.pathBuffer.length > 20) {
+          if (this.$options.pathBuffer.length >= 15) {
             request.flush()
           }
 
@@ -182,32 +185,38 @@ export default {
         },
 
         parseTime (timestr) {
-          if (moment.isMoment(timestr)) {
-            return timestr
-          } else if (typeof timestr === 'object') {
-            return moment(timestr)
-          } else {
-            if (typeof timestr === 'number') {
-              return moment(String(timestr) + '-01-01')
-            }
-            if (timestr === '*') {
-          //
-              return moment()
-            }
-            if (timestr.indexOf('*') === -1) {
+
+          try {
+            if (moment.isMoment(timestr)) {
+              return timestr
+            } else if (typeof timestr === 'object') {
               return moment(timestr)
-            }
-            var re = /(\*)(.)(\d+)(.)/i
-            var matches = timestr.match(re)
-
-            var time = moment()
-            if (matches[2] === '-') {
-              time.subtract(matches[3], matches[4])
             } else {
-              time.add(matches[3], matches[4])
-            }
+              if (typeof timestr === 'number') {
+                return moment(String(timestr) + '-01-01')
+              }
+              if (timestr === '*') {
+            //
+                return moment()
+              }
+              if (timestr.indexOf('*') === -1) {
+                return moment(timestr)
+              }
+              var re = /(\*)(.)(\d+)(.)/i
+              var matches = timestr.match(re)
 
-            return time
+              var time = moment()
+              if (matches[2] === '-') {
+                time.subtract(matches[3], matches[4])
+              } else {
+                time.add(matches[3], matches[4])
+              }
+
+              return time
+            }
+          }
+          catch(err) {
+            return null
           }
         },
         getInterpolated (path, start = '*-1d', end = '*', interval = '1m') {
@@ -287,7 +296,7 @@ export default {
               this.$options.webIdMap[response] = path
               var req = this.requestAttributeValues
               req()
-              if (this.$options.valueBuffer.length > 10) {
+              if (this.$options.valueBuffer.length >= 15) {
                 req.flush()
               }
             }
@@ -313,7 +322,7 @@ export default {
 
         batchRequestAttributeValues () {
           var url = apiUrl + '/streamsets/value?webid=' + this.$options.valueBuffer.join('&webid=') + '&webIDType=PathOnly'
-      // clear buffer
+          // clear buffer
 
           var buffer = this.$options.valueBuffer
 
@@ -375,85 +384,77 @@ export default {
           return this.context
         },
 
-        getAttributeTree(path, categoryFilter=null) {
+        getAttributeTree (path, categoryFilter = null) {
           var promise = new Promise(async function (resolve, reject) {
             var webid = await this.getAttributeWebId(path)
             var url = apiUrl + '/streamsets/' + webid + '/value?webIDType=PathOnly&searchFullHierarchy=true'
             if (categoryFilter) {
-              url += "&categoryName="+encodeURIComponent(categoryFilter)
+              url += '&categoryName=' + encodeURIComponent(categoryFilter)
             }
             const response = await this.$http.get(url)
             var items = response.data.Items
 
-            var root = /\|(?<tag>.+)/g.exec(path)[1]
+            var root = /\|(.+)/g.exec(path)[1]
 
             var flatmap = {}
             // create flatmap of all paths and values
-            for(var item of items) {
+            for (var item of items) {
               flatmap[/\|(.*)/g.exec(item.Path)[1]] = item
             }
-            let keys = Object.keys(flatmap).sort()
+            const keys = Object.keys(flatmap).sort()
 
             var tree = {}
-            tree[root] = {name: root, value: false, path: false, webid: false, c: {}}
+            tree[root] = { name: root, value: false, path: false, webid: false, c: {}}
 
             var tmp
 
-
-            for(var key of keys) {
+            for (var key of keys) {
               tmp = tree
-              var length = key.split("|").length
+              var length = key.split('|').length
               var index = 1
 
-              for(var sub of key.split("|")) {
-                
-                if(sub in tmp) { 
-                  tmp = tmp[sub].c 
+              for (var sub of key.split('|')) {
+                if (sub in tmp) {
+                  tmp = tmp[sub].c
                 } else {
-                  tmp[sub] = {name: sub, value: flatmap[key].Value, path: flatmap[key].Path, webid: flatmap[key].WebId, c: {}}
+                  tmp[sub] = { name: sub, value: flatmap[key].Value, path: flatmap[key].Path, webid: flatmap[key].WebId, c: {}}
                 }
                 index++
               }
             }
 
             resolve(tree)
-
-
           }.bind(this))
 
           return promise
-
-
         },
 
-        getElements(path, direct=true, templateFilter=null, categoryFilter=null, sortField=null) {
+        getElements (path, direct = true, templateFilter = null, categoryFilter = null, sortField = null) {
           return this.getChildren(path, direct, templateFilter, categoryFilter, sortField)
         },
-        getChildren (path, direct=true, templateFilter=null, categoryFilter=null, sortField=null) {
-
-
+        getChildren (path, direct = true, templateFilter = null, categoryFilter = null, sortField = null) {
           var promise = new Promise(async function (resolve, reject) {
-            var cachePath = path + '-children'+direct+templateFilter
+            var cachePath = path + '-children' + direct + templateFilter
             if (cachePath in this.$options.valueCache) {
               resolve(this.$options.valueCache[cachePath])
               return
             }
             const webid = await this.getElementWebId(path)
             var url = apiUrl + '/elements/' + webid + '/elements?selectedFields=Items.WebId;Items.Name;Items.TemplateName;Items.Path;Items.HasChildren;Items.Description;Items.ExtendedProperties' + '&webIDType=PathOnly'
-            if(!direct) {
-              url += "&searchFullHierarchy=true"
+            if (!direct) {
+              url += '&searchFullHierarchy=true'
             }
-            if(templateFilter !== null) {
-              url += "&templateName="+encodeURIComponent(templateFilter)
+            if (templateFilter !== null) {
+              url += '&templateName=' + encodeURIComponent(templateFilter)
             }
-            if(categoryFilter !== null) {
-              url += "&categoryName="+encodeURIComponent(categoryFilter)
+            if (categoryFilter !== null) {
+              url += '&categoryName=' + encodeURIComponent(categoryFilter)
             }
             const response = await this.$http.get(url)
 
             var items = response.data.Items
 
-            if(sortField !== null) {
+            if (sortField !== null) {
               var items = _.sortBy(items, sortField)
             }
 

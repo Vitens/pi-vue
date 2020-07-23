@@ -34,14 +34,22 @@ export default {
     stacked: {
       type: Boolean,
       default: false
+    },
+    fontColor: {
+      type: String,
+      default: '#333'
+    },
+    grid: {
+      type: Boolean,
+      default: true
     }
   },
   computed: {
 
-    chartStart() {
+    chartStart () {
       return this.$parent.chartStart
     },
-    chartEnd() {
+    chartEnd () {
       return this.$parent.chartEnd
     },
 
@@ -55,7 +63,11 @@ export default {
           labelString: this.label
         },
         stacked: this.stacked,
+        gridLines: {
+          display: this.grid
+        },
         ticks: {
+          fontColor: this.fontColor,
           min: this.min,
           max: this.max,
           suggestedMin: this.suggestedMin,
@@ -70,6 +82,9 @@ export default {
     }
   },
   created () {
+
+    this.$parent.$emit('update', this._uid, this.data, 'axis')
+
     // passthrough updates from underlying elements
     this.$on('loading', function (uid, type) {
       this.$parent.$emit('loading', uid, type)
@@ -83,12 +98,12 @@ export default {
         data.yAxisID = 'y-axis-' + this._uid
       }
       this.$parent.$emit('update', uid, data, type)
-
     }.bind(this))
 
     this.$on('delete', function (uid, data, type) {
       this.$parent.$emit('delete', uid, data, type)
     }.bind(this))
+
   },
   mounted () {
     this.$parent.$emit('update', this._uid, this.data, 'axis')
