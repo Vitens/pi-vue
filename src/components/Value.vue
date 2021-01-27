@@ -43,7 +43,7 @@ export default {
           path = this.$pi.parse(this.path, this.context)
         }
 
-        if(this.nobatch) {
+        if (this.nobatch) {
           var value = await this.$pi.getSingleValue(path)
         } else {
           var value = await this.$pi.getValue(path, this.static)

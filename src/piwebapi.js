@@ -185,7 +185,6 @@ export default {
         },
 
         parseTime (timestr) {
-
           try {
             if (moment.isMoment(timestr)) {
               return timestr
@@ -222,8 +221,7 @@ export default {
 
               return time
             }
-          }
-          catch(err) {
+          } catch (err) {
             return null
           }
         },
@@ -233,11 +231,11 @@ export default {
           this.getWebId(path).then(response => {
             var url = apiUrl + '/streams/' + response + '/interpolated?startTime=' + this.convertTime(start) + '&endTime=' + this.convertTime(end) + '&interval=' + interval + '&webIDType=PathOnly'
             this.$http.get(url).then(response => {
-              if('Errors' in response.data) {
+              if ('Errors' in response.data) {
                 reject(response.data.Errors)
               } else {
                 resolve(response.data.Items)
-              }   
+              }
             })
           }, reject => {
             resolve([])
@@ -252,11 +250,11 @@ export default {
           this.getWebId(path).then(response => {
             var url = apiUrl + '/streams/' + response + '/summary?startTime=' + this.convertTime(start) + '&endTime=' + this.convertTime(end) + '&summaryDuration=' + interval + '&summaryType=' + summarytype + '&webIDType=PathOnly&filterExpression=' + "'.'<10000"
             this.$http.get(url).then(response => {
-              if('Errors' in response.data) {
+              if ('Errors' in response.data) {
                 reject(response.data.Errors)
               } else {
                 resolve(response.data.Items)
-              }   
+              }
             })
           }, reject => {
             resolve([])
@@ -271,7 +269,7 @@ export default {
           this.getWebId(path).then(response => {
             var url = apiUrl + '/streams/' + response + '/recorded?startTime=' + this.convertTime(start) + '&endTime=' + this.convertTime(end) + '&maxCount=' + maxCount + '&webIDType=PathOnly'
             this.$http.get(url).then(response => {
-              if('Errors' in response.data) {
+              if ('Errors' in response.data) {
                 reject(response.data.Errors)
               } else {
                 resolve(response.data.Items)
@@ -290,7 +288,7 @@ export default {
           this.getWebId(path).then(response => {
             var url = apiUrl + '/streams/' + response + '/plot?startTime=' + this.convertTime(start) + '&endTime=' + this.convertTime(end) + '&intervals=' + intervals + '&webIDType=PathOnly'
             this.$http.get(url).then(response => {
-              if('Errors' in response.data) {
+              if ('Errors' in response.data) {
                 reject(response.data.Errors)
               } else {
                 resolve(response.data.Items)
@@ -304,7 +302,7 @@ export default {
           return promise
         },
 
-        async getSingleValue(path) {
+        async getSingleValue (path) {
           var webid = await this.getWebId(path)
           var url = apiUrl + '/streams/' + webid + '/value'
           var response = await this.$http.get(url)
@@ -423,7 +421,7 @@ export default {
               url += '&categoryName=' + encodeURIComponent(categoryFilter)
             }
             const response = await this.$http.get(url)
-            console.log('hier!',response.data)
+            console.log('hier!', response.data)
             var items = response.data.Items
 
             var root = /\|(.+)/g.exec(path)[1]

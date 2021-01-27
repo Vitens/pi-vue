@@ -112,7 +112,7 @@ export default {
     updating () {
       return this.loadingIds.length > 0
     },
-    showReset() {
+    showReset () {
       return (this.userMin !== undefined) || (this.userMin !== undefined)
     }
 
@@ -193,7 +193,7 @@ export default {
       this.$options.chart.options.scales.yAxes[0].ticks.max = val
       this.$options.chart.update()
     },
-    legend(val) {
+    legend (val) {
       this.$options.chart.options.legend.display = val !== 'none'
       this.$options.chart.options.legend.position = val
       this.$options.chart.update()
@@ -213,7 +213,7 @@ export default {
 
     var options = {
       type: this.type,
-      //plugins: [legendPlugin],
+      // plugins: [legendPlugin],
 
       options: {
         layout: {
@@ -251,9 +251,9 @@ export default {
                 return true
               },
               afterZoom: function (start, end) {
-                this.$emit('zoom', {start:start, end:end})
+                this.$emit('zoom', { start: start, end: end })
               }.bind(this),
-              afterVerticalZoom: function(start, end) {
+              afterVerticalZoom: function (start, end) {
                 this.userMin = start
                 this.userMax = end
               }.bind(this)
@@ -289,7 +289,7 @@ export default {
         },
         legend: {
           display: this.legend !== 'none',
-          position: this.legend,
+          position: this.legend
         },
         scales: {
           xAxes: [{
@@ -313,7 +313,7 @@ export default {
               fontColor: this.fontColor,
               autoSkip: true,
               autoSkipPadding: 15,
-              maxRotation: 0,
+              maxRotation: 0
             }
           }],
           yAxes: []
@@ -358,7 +358,7 @@ export default {
       evt.preventDefault()
     },
 
-    resetZoom() {
+    resetZoom () {
       this.userMin = undefined
       this.userMax = undefined
     },
@@ -407,8 +407,6 @@ export default {
         this.$options.chart.options.scales.yAxes = []
       }
 
-
-
       // load datasets
       this.$options.chart.data.datasets = []
 
@@ -421,16 +419,13 @@ export default {
 
         const min = _.minBy(series.data, 'y')
         const max = _.maxBy(series.data, 'y')
-        if(min) {
+        if (min) {
           lowestY = Math.min(lowestY, _.minBy(series.data, 'y').y)
         }
-        if(max) {
+        if (max) {
           highestY = Math.max(highestY, _.maxBy(series.data, 'y').y)
         }
-
       }
-
-
 
       // load and configure axis
 
@@ -441,23 +436,22 @@ export default {
         this.$options.chart.options.scales.yAxes.push(axis)
 
         // if both max and suggestedMax is set
-        if(axis.ticks.max != undefined && axis.ticks.suggestedMax != undefined) {
+        if (axis.ticks.max != undefined && axis.ticks.suggestedMax != undefined) {
           if (highestY < axis.ticks.max) {
             axis.ticks.max = undefined
           }
         }
 
         // if both min and suggestedMin is set
-        if(axis.ticks.min != undefined && axis.ticks.suggestedMin != undefined) {
+        if (axis.ticks.min != undefined && axis.ticks.suggestedMin != undefined) {
           if (lowestY > axis.ticks.min) {
             axis.ticks.min = undefined
           }
         }
 
-
         // restore user ticks if necessary
-        if(this.userMin) { axis.ticks.min = this.userMin }
-        if(this.userMax) { axis.ticks.max = this.userMax }
+        if (this.userMin) { axis.ticks.min = this.userMin }
+        if (this.userMax) { axis.ticks.max = this.userMax }
       }
 
       // load thresholds
@@ -478,13 +472,12 @@ export default {
             }
 
             yscale.ticks.suggestedMax = scalemax
-            //yscale.ticks.max = scalemax
+            // yscale.ticks.max = scalemax
           }
         }
       }
 
       this.$options.chart.data.datasets.sort((a, b) => a.order - b.order)
-
 
       this.loading = false
 

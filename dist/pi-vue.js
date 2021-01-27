@@ -52035,7 +52035,6 @@ exports.default = {
           return momentObj.toISOString();
         },
         parseTime: function parseTime(timestr) {
-
           try {
             if (_moment2.default.isMoment(timestr)) {
               return timestr;
@@ -55091,7 +55090,7 @@ exports.default = {
 
     var options = {
       type: this.type,
-      //plugins: [legendPlugin],
+      // plugins: [legendPlugin],
 
       options: {
         layout: {
@@ -55366,7 +55365,7 @@ exports.default = {
                       }
 
                       yscale.ticks.suggestedMax = scalemax;
-                      //yscale.ticks.max = scalemax
+                      // yscale.ticks.max = scalemax
                     }
                   }
                 }
@@ -56403,7 +56402,6 @@ exports.default = {
                     val.y = NaN;
                   }
                 }
-
                 _context.next = 70;
                 break;
 
@@ -56785,7 +56783,6 @@ function assign(target, source) {
 
 // Install the components
 function install(Vue, options) {
-
   console.log('initializing install');
 
   var DEFAULT_OPTIONS = {

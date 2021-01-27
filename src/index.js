@@ -31,7 +31,6 @@ function assign (target, source) { // eslint-disable-line no-unused-vars
 
 // Install the components
 export function install (Vue, options) {
-
   console.log('initializing install')
 
   const DEFAULT_OPTIONS = {
