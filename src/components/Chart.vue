@@ -1,6 +1,7 @@
 <template>
   <div class='pi-chart' @dblclick="isFullscreen = !isFullscreen" :class="{fullscreen: isFullscreen, loading: loading}" ref="container">
 
+    <div class='pi-chart-reset-zoom' v-show='showReset' @click='resetZoom'></div>
     <div class='pi-updating' v-show='updating'></div>
 
     <el-popover
@@ -36,7 +37,7 @@ import _ from 'lodash'
 // import 'chartjs-plugin-export'
 import 'chartjs-plugin-crosshair'
 import 'chartjs-plugin-threshold'
-// import 'chartjs-plugin-mobilezoom'
+import 'chartjs-plugin-mobilezoom'
 
 export default {
   data () {
@@ -52,8 +53,8 @@ export default {
       chartEnd: '',
       uid: '',
       controlsVisible: false,
-      userMin: 0,
-      userMax: 0,
+      userMin: undefined,
+      userMax: undefined,
       userStep: 0.1
     }
   },
@@ -110,7 +111,11 @@ export default {
   computed: {
     updating () {
       return this.loadingIds.length > 0
+    },
+    showReset () {
+      return (this.userMin !== undefined) || (this.userMin !== undefined)
     }
+
   },
 
   created () {
@@ -188,7 +193,7 @@ export default {
       this.$options.chart.options.scales.yAxes[0].ticks.max = val
       this.$options.chart.update()
     },
-    legend(val) {
+    legend (val) {
       this.$options.chart.options.legend.display = val !== 'none'
       this.$options.chart.options.legend.position = val
       this.$options.chart.update()
@@ -208,7 +213,7 @@ export default {
 
     var options = {
       type: this.type,
-      //plugins: [legendPlugin],
+      // plugins: [legendPlugin],
 
       options: {
         layout: {
@@ -246,7 +251,11 @@ export default {
                 return true
               },
               afterZoom: function (start, end) {
-                this.$emit('zoom', {start:start, end:end})
+                this.$emit('zoom', { start: start, end: end })
+              }.bind(this),
+              afterVerticalZoom: function (start, end) {
+                this.userMin = start
+                this.userMax = end
               }.bind(this)
             }
           }
@@ -280,7 +289,7 @@ export default {
         },
         legend: {
           display: this.legend !== 'none',
-          position: this.legend,
+          position: this.legend
         },
         scales: {
           xAxes: [{
@@ -304,7 +313,7 @@ export default {
               fontColor: this.fontColor,
               autoSkip: true,
               autoSkipPadding: 15,
-              maxRotation: 0,
+              maxRotation: 0
             }
           }],
           yAxes: []
@@ -347,6 +356,11 @@ export default {
 
     fullscreen (evt) {
       evt.preventDefault()
+    },
+
+    resetZoom () {
+      this.userMin = undefined
+      this.userMax = undefined
     },
 
     requestLoad () {},
@@ -393,12 +407,51 @@ export default {
         this.$options.chart.options.scales.yAxes = []
       }
 
-      // load axis
+      // load datasets
+      this.$options.chart.data.datasets = []
+
+      var lowestY = 1e99
+      var highestY = -1e99
+
+      for (var seriesId in this.components.series) {
+        var series = Object.assign({}, this.components.series[seriesId])
+        this.$options.chart.data.datasets.push(series)
+
+        const min = _.minBy(series.data, 'y')
+        const max = _.maxBy(series.data, 'y')
+        if (min) {
+          lowestY = Math.min(lowestY, _.minBy(series.data, 'y').y)
+        }
+        if (max) {
+          highestY = Math.max(highestY, _.maxBy(series.data, 'y').y)
+        }
+      }
+
+      // load and configure axis
+
       for (var axisId in this.components.axis) {
-        var axis = Object.assign({}, this.components.axis[axisId])
+        // wierd but necessary?
+        var axis = JSON.parse(JSON.stringify(this.components.axis[axisId]))
         axis.type = 'linear'
         this.$options.chart.options.scales.yAxes.push(axis)
-        // hide default axis
+
+        // if both max and suggestedMax is set
+        if (axis.ticks.max != undefined && axis.ticks.suggestedMax != undefined) {
+          if (highestY < axis.ticks.max) {
+            axis.ticks.max = undefined
+          }
+        }
+
+        // if both min and suggestedMin is set
+        if (axis.ticks.min != undefined && axis.ticks.suggestedMin != undefined) {
+          if (lowestY > axis.ticks.min) {
+            axis.ticks.min = undefined
+          }
+        }
+
+        // restore user ticks if necessary
+        if (this.userMin) { axis.ticks.min = this.userMin }
+        if (this.userMax) { axis.ticks.max = this.userMax }
       }
 
       // load thresholds
@@ -419,21 +472,12 @@ export default {
             }
 
             yscale.ticks.suggestedMax = scalemax
-            //yscale.ticks.max = scalemax
+            // yscale.ticks.max = scalemax
           }
         }
       }
 
-      // load datasets
-      this.$options.chart.data.datasets = []
-
-      for (var seriesId in this.components.series) {
-        var series = Object.assign({}, this.components.series[seriesId])
-        this.$options.chart.data.datasets.push(series)
-      }
-
       this.$options.chart.data.datasets.sort((a, b) => a.order - b.order)
-
 
       this.loading = false
 
@@ -448,12 +492,22 @@ export default {
   background: #FFF;
   border: 1px solid #AAA;
   position: relative;
-  touch-action: pan-x pinch-zoom;
+  touch-action: pan-y;
+  cursor: crosshair;
 }
-.pi-chart .reset-zoom {
+.pi-chart-reset-zoom {
   position: absolute;
-  right: 20px;
-  top: 20px;
+  width: 16px;
+  height: 16px;
+  left: 5px;
+  opacity: 0.6;
+  cursor: pointer;
+  top: 5px;
+  z-index: 99;
+  background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAALGPC/xhBQAAAOFJREFUOBFjdJzzZ+v///+9GMgAjIyM25jI0Ies5T8yhyw2Iy5dnvP+i/749/cGAwMjAwcTk8b2JMbX2NRi9QJY898/+4FhI/T//z+hH0A2SIxoA378+7Me6DltmAYQGyQG4yPTWF0AdPZHRkaGozCFEDbjBxifaNph9u//IIxPAw4X4NOCKoc1FkCJi4HhP////wzWIOVQL3zcn8LijaqdgQGHCxCaQRogBv3nR9cM4mM1gIOJJRDotKswDSA2SAzGR6axegGkwG3Rf7Hfv/5eB7E5mJhxJiSQPEWAccBzIwBxFFVMvMQOrAAAAABJRU5ErkJggg==')
+}
+.pi-chart-reset-zoom:hover {
+  opacity: 1;
 }
 
 .fade-enter-active, .fade-leave-active {
@@ -605,6 +659,107 @@ export default {
 	border: 1px solid #48F;
 	pointer-events: none;
 }
+
+.chartjs-zoombox-handle-horizontal div, .chartjs-zoombox-handle-vertical div {
+	display: none;
+}
+
+.chartjs-zoombox-handle-both div {
+	display: block;
+}
+.chartjs-zoombox-handle-both {
+	position: absolute;
+	left: 0px;
+	right: 0px;
+	top: 0px;
+	bottom: 0px;
+}
+
+.chartjs-zoombox-handle-corner-0::after, 
+.chartjs-zoombox-handle-corner-1::after,
+.chartjs-zoombox-handle-corner-2::after,
+.chartjs-zoombox-handle-corner-3::after {
+	content: "";
+	position: absolute;
+	width: 3px;
+	height: 20px;
+	background: rgba(66,133,244,1);
+}
+.chartjs-zoombox-handle-corner-0::after { left: 0px; }
+.chartjs-zoombox-handle-corner-1::after { right: 0px; }
+.chartjs-zoombox-handle-corner-2::after { left: 0px; bottom: 0px; }
+.chartjs-zoombox-handle-corner-3::after { right: 0px; bottom: 0px; }
+
+.chartjs-zoombox-handle-corner-0::before,
+.chartjs-zoombox-handle-corner-1::before,
+.chartjs-zoombox-handle-corner-2::before,
+.chartjs-zoombox-handle-corner-3::before {
+	content: "";
+	position: absolute;
+	width: 20px;
+	height: 3px;
+	background: rgba(66,133,244,1);
+}
+.chartjs-zoombox-handle-corner-0::before { left: 0px; }
+.chartjs-zoombox-handle-corner-1::before { right: 0px; }
+.chartjs-zoombox-handle-corner-2::before { left: 0px; bottom: 0px; }
+.chartjs-zoombox-handle-corner-3::before { right: 0px; bottom: 0px; }
+
+.chartjs-zoombox-handle-horizontal {
+	position: absolute;
+	left: 0px;
+	right: 0px;
+}
+.chartjs-zoombox-handle-horizontal::before {
+	position: absolute;
+	width: 4px;
+	height: 40px;
+	background: rgba(66,133,244,1);
+	z-index: 999;
+	left: -2px;
+	top: -20px;
+	content: '';
+}
+.chartjs-zoombox-handle-horizontal::after {
+	position: absolute;
+	width: 4px;
+	height: 40px;
+	background: rgba(66,133,244,1);
+	z-index: 999;
+	right: -2px;
+	z-index: 999;
+	top: -20px;
+	content: '';
+}
+
+.chartjs-zoombox-handle-vertical {
+	position: absolute;
+	top: 0px;
+	bottom: 0px;
+}
+.chartjs-zoombox-handle-vertical::before {
+	position: absolute;
+	width: 40px;
+	height: 4px;
+	background: rgba(66,133,244,1);
+	z-index: 999;
+	top: -2px;
+	left: -20px;
+	content: '';
+}
+.chartjs-zoombox-handle-vertical::after {
+	position: absolute;
+	width: 40px;
+	height: 4px;
+	background: rgba(66,133,244,1);
+	left: -20px;
+	z-index: 999;
+	bottom: -2px;
+	content: '';
+}
+
+
+
 .chartjs-fasttooltip .tooltip-title {
 	font-weight: bold;
 	display: block;
@@ -618,4 +773,5 @@ export default {
 	height: 10px;
 	margin-right: 5px;
 }
+
 </style>

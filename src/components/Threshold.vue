@@ -1,5 +1,5 @@
 <template>
-<p></p>
+<i></i>
 </template>
 <script>
 export default {
@@ -41,7 +41,7 @@ export default {
   },
   computed: {
 
-    reloadTrigger() {
+    reloadTrigger () {
       return {
         path: this.path,
         context: this.context
@@ -61,25 +61,24 @@ export default {
     }
   },
   watch: {
-    reloadTrigger() {
+    reloadTrigger () {
       this.requestLoad()
     },
     data () {
       this.$parent.$emit('update', this._uid, this.data, 'threshold')
-    },
+    }
   },
-  created() {
+  created () {
     this.requestLoad = _.debounce(function () {
       this.loadData()
     }, 10)
   },
-  mounted() {
+  mounted () {
     this.$parent.$emit('update', this._uid, this.data, 'threshold')
 
     this.$nextTick(function () {
       this.requestLoad()
     }.bind(this))
-
   },
   beforeDestroy () {
     console.log('destroy threshold')

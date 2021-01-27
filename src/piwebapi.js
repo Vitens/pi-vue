@@ -185,7 +185,6 @@ export default {
         },
 
         parseTime (timestr) {
-
           try {
             if (moment.isMoment(timestr)) {
               return timestr
@@ -199,13 +198,21 @@ export default {
             //
                 return moment()
               }
-              if (timestr.indexOf('*') === -1) {
+              if (timestr === 't') {
+                return moment().hour(0)
+              }
+              if (timestr.indexOf('*') !== -1) {
+                var re = /(\*)(.)(\d+)(.)/i
+                var matches = timestr.match(re)
+                var time = moment()
+              } else if (timestr.indexOf('t') !== -1) {
+                var re = /(t)(.)(\d+)(.)/i
+                var matches = timestr.match(re)
+                var time = moment().hour(0)
+              } else {
                 return moment(timestr)
               }
-              var re = /(\*)(.)(\d+)(.)/i
-              var matches = timestr.match(re)
 
-              var time = moment()
               if (matches[2] === '-') {
                 time.subtract(matches[3], matches[4])
               } else {
@@ -214,8 +221,7 @@ export default {
 
               return time
             }
-          }
-          catch(err) {
+          } catch (err) {
             return null
           }
         },
@@ -225,7 +231,11 @@ export default {
           this.getWebId(path).then(response => {
             var url = apiUrl + '/streams/' + response + '/interpolated?startTime=' + this.convertTime(start) + '&endTime=' + this.convertTime(end) + '&interval=' + interval + '&webIDType=PathOnly'
             this.$http.get(url).then(response => {
-              resolve(response.data.Items)
+              if ('Errors' in response.data) {
+                reject(response.data.Errors)
+              } else {
+                resolve(response.data.Items)
+              }
             })
           }, reject => {
             resolve([])
@@ -238,9 +248,13 @@ export default {
           var promise = new Promise(
         function (resolve, reject) {
           this.getWebId(path).then(response => {
-            var url = apiUrl + '/streams/' + response + '/summary?startTime=' + this.convertTime(start) + '&endTime=' + this.convertTime(end) + '&summaryDuration=' + interval + '&summaryType=' + summarytype + '&webIDType=PathOnly&filterExpression=' + "'.'>-999999"
+            var url = apiUrl + '/streams/' + response + '/summary?startTime=' + this.convertTime(start) + '&endTime=' + this.convertTime(end) + '&summaryDuration=' + interval + '&summaryType=' + summarytype + '&webIDType=PathOnly&filterExpression=' + "'.'<10000"
             this.$http.get(url).then(response => {
-              resolve(response.data.Items)
+              if ('Errors' in response.data) {
+                reject(response.data.Errors)
+              } else {
+                resolve(response.data.Items)
+              }
             })
           }, reject => {
             resolve([])
@@ -255,7 +269,11 @@ export default {
           this.getWebId(path).then(response => {
             var url = apiUrl + '/streams/' + response + '/recorded?startTime=' + this.convertTime(start) + '&endTime=' + this.convertTime(end) + '&maxCount=' + maxCount + '&webIDType=PathOnly'
             this.$http.get(url).then(response => {
-              resolve(response.data.Items)
+              if ('Errors' in response.data) {
+                reject(response.data.Errors)
+              } else {
+                resolve(response.data.Items)
+              }
             })
           }, reject => {
             resolve([])
@@ -270,7 +288,11 @@ export default {
           this.getWebId(path).then(response => {
             var url = apiUrl + '/streams/' + response + '/plot?startTime=' + this.convertTime(start) + '&endTime=' + this.convertTime(end) + '&intervals=' + intervals + '&webIDType=PathOnly'
             this.$http.get(url).then(response => {
-              resolve(response.data.Items)
+              if ('Errors' in response.data) {
+                reject(response.data.Errors)
+              } else {
+                resolve(response.data.Items)
+              }
             })
           }, error => {
             resolve([])
@@ -278,6 +300,13 @@ export default {
           })
         }.bind(this))
           return promise
+        },
+
+        async getSingleValue (path) {
+          var webid = await this.getWebId(path)
+          var url = apiUrl + '/streams/' + webid + '/value'
+          var response = await this.$http.get(url)
+          return response.data
         },
 
         getValue (path, persist = false) {
@@ -392,6 +421,7 @@ export default {
               url += '&categoryName=' + encodeURIComponent(categoryFilter)
             }
             const response = await this.$http.get(url)
+            console.log('hier!', response.data)
             var items = response.data.Items
 
             var root = /\|(.+)/g.exec(path)[1]
@@ -429,10 +459,10 @@ export default {
           return promise
         },
 
-        getElements (path, direct = true, templateFilter = null, categoryFilter = null, sortField = null) {
-          return this.getChildren(path, direct, templateFilter, categoryFilter, sortField)
+        getElements (path, direct = true, templateFilter = null, categoryFilter = null, sortField = null, nameFilter = null) {
+          return this.getChildren(path, direct, templateFilter, categoryFilter, sortField, nameFilter)
         },
-        getChildren (path, direct = true, templateFilter = null, categoryFilter = null, sortField = null) {
+        getChildren (path, direct = true, templateFilter = null, categoryFilter = null, sortField = null, nameFilter = null) {
           var promise = new Promise(async function (resolve, reject) {
             var cachePath = path + '-children' + direct + templateFilter
             if (cachePath in this.$options.valueCache) {
@@ -449,6 +479,9 @@ export default {
             }
             if (categoryFilter !== null) {
               url += '&categoryName=' + encodeURIComponent(categoryFilter)
+            }
+            if (nameFilter !== null) {
+              url += '&nameFilter=' + encodeURIComponent(nameFilter)
             }
             const response = await this.$http.get(url)
 

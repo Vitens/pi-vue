@@ -17,6 +17,7 @@ export default {
     precision: { default: 2, type: Number },
     conversion: { default: 1, type: Number },
     locale: { default: false, type: Boolean },
+    nobatch: { default: false, type: Boolean },
     static: Boolean
   },
   data () {
@@ -42,7 +43,12 @@ export default {
           path = this.$pi.parse(this.path, this.context)
         }
 
-        var value = await this.$pi.getValue(path, this.static)
+        if (this.nobatch) {
+          var value = await this.$pi.getSingleValue(path)
+        } else {
+          var value = await this.$pi.getValue(path, this.static)
+        }
+
         if (!value.Good || value.Value === -99999) {
           value.Value = '-'
         }

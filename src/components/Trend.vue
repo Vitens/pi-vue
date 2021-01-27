@@ -82,7 +82,7 @@ export default {
     },
     downsample: {
       type: Number,
-      default: 0,
+      default: 0
     },
     fill: {
       type: Boolean,
@@ -90,12 +90,12 @@ export default {
     },
     clamp: {
       type: Boolean,
-      default: true
+      default: false
     }
   },
   data () {
     return {
-      seriesData: [],
+      seriesData: []
     }
   },
   computed: {
@@ -121,7 +121,7 @@ export default {
         steppedLine: this.stepped,
         noThresh: this.nothresh,
         order: this.order,
-        clamp: this.clamp,
+        clamp: this.clamp
       }
     },
 
@@ -184,14 +184,19 @@ export default {
 
       var path = this.pipath
 
-      if (this.interpolated) {
-        var response = await this.$pi.getInterpolated(path, this.$parent.chartStart, this.$parent.chartEnd, '300s')
-      } else if (this.summary) {
-        var response = await this.$pi.getSummary(path, this.$parent.chartStart, this.$parent.chartEnd, this.summaryInterval, 'Total')
-      } else if (this.recorded) {
-        var response = await this.$pi.getRecorded(path, this.$parent.chartStart, this.$parent.chartEnd)
-      } else {
-        var response = await this.$pi.getPlot(path, this.$parent.chartStart, this.$parent.chartEnd, 250)
+      try {
+        if (this.interpolated) {
+          var response = await this.$pi.getInterpolated(path, this.$parent.chartStart, this.$parent.chartEnd, '300s')
+        } else if (this.summary) {
+          var response = await this.$pi.getSummary(path, this.$parent.chartStart, this.$parent.chartEnd, this.summaryInterval, 'Total')
+        } else if (this.recorded) {
+          var response = await this.$pi.getRecorded(path, this.$parent.chartStart, this.$parent.chartEnd)
+        } else {
+          var response = await this.$pi.getPlot(path, this.$parent.chartStart, this.$parent.chartEnd, 250)
+        }
+      } catch (e) {
+        this.$parent.$emit('finish', this._uid, 'trend')
+        return
       }
 
       const seriesData = []
@@ -212,32 +217,28 @@ export default {
           x: new Date(ts),
           y: val
         })
-
       }
 
       const mean = _.meanBy(seriesData, 'y')
 
-      if(this.downsample > 0) {
+      if (this.downsample > 0) {
         this.seriesData = downsample(seriesData, this.downsample)
       } else {
         this.seriesData = seriesData
       }
 
-
       // remove extreme outliers
-      if(this.clamp) {
-        for(var val of seriesData) {
-          if (val.y > 10*mean) {
+      if (this.clamp) {
+        for (var val of seriesData) {
+          if (val.y > 10 * mean) {
             val.y = NaN
           }
         }
-
       }
-
 
       this.$parent.$emit('finish', this._uid, 'trend')
     }
-  },
+  }
 }
 </script>
 <style>
