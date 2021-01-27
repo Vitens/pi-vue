@@ -48,7 +48,7 @@ export function install (Vue, options) {
   }
 
   axios.defaults.withCredentials = options['with_credentials']
-  axios.defaults.timeout = 10000
+  axios.defaults.timeout = 20000
 
   const VueLodash = {
     install (Vue) {

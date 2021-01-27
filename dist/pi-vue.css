@@ -1,6 +1,6 @@
 /*!
  * pi-vue v1.0.7
- * (c) 2019 Abel Heinsbroek
+ * (c) 2021 Abel Heinsbroek
  * Released under the MIT License.
  */
 
@@ -33,11 +33,23 @@
   background: #FFF;
   border: 1px solid #AAA;
   position: relative;
+  -ms-touch-action: pan-y;
+      touch-action: pan-y;
+  cursor: crosshair;
 }
-.pi-chart .reset-zoom {
+.pi-chart-reset-zoom {
   position: absolute;
-  right: 20px;
-  top: 20px;
+  width: 16px;
+  height: 16px;
+  left: 5px;
+  opacity: 0.6;
+  cursor: pointer;
+  top: 5px;
+  z-index: 99;
+  background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAALGPC/xhBQAAAOFJREFUOBFjdJzzZ+v///+9GMgAjIyM25jI0Ies5T8yhyw2Iy5dnvP+i/749/cGAwMjAwcTk8b2JMbX2NRi9QJY898/+4FhI/T//z+hH0A2SIxoA378+7Me6DltmAYQGyQG4yPTWF0AdPZHRkaGozCFEDbjBxifaNph9u//IIxPAw4X4NOCKoc1FkCJi4HhP////wzWIOVQL3zcn8LijaqdgQGHCxCaQRogBv3nR9cM4mM1gIOJJRDotKswDSA2SAzGR6axegGkwG3Rf7Hfv/5eB7E5mJhxJiSQPEWAccBzIwBxFFVMvMQOrAAAAABJRU5ErkJggg==')
+}
+.pi-chart-reset-zoom:hover {
+  opacity: 1;
 }
 .fade-enter-active, .fade-leave-active {
   transition: opacity 0.3s;
@@ -136,6 +148,384 @@
   margin-top: 5px;
   font-weight: bold;
 }
+.pi-chart .pi-updating {
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 16px;
+  height: 16px;
+  background: url(data:image/gif;base64,R0lGODlhEAAQAPQAAP///1hYWPr6+nx8fK6urltbW3BwcOPj48XFxWZmZqWlpZqamu3t7bu7u9nZ2YeHh5CQkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCgAAACwAAAAAEAAQAAAFUCAgjmRpnqUwFGwhKoRgqq2YFMaRGjWA8AbZiIBbjQQ8AmmFUJEQhQGJhaKOrCksgEla+KIkYvC6SJKQOISoNSYdeIk1ayA8ExTyeR3F749CACH5BAkKAAAALAAAAAAQABAAAAVoICCKR9KMaCoaxeCoqEAkRX3AwMHWxQIIjJSAZWgUEgzBwCBAEQpMwIDwY1FHgwJCtOW2UDWYIDyqNVVkUbYr6CK+o2eUMKgWrqKhj0FrEM8jQQALPFA3MAc8CQSAMA5ZBjgqDQmHIyEAIfkECQoAAAAsAAAAABAAEAAABWAgII4j85Ao2hRIKgrEUBQJLaSHMe8zgQo6Q8sxS7RIhILhBkgumCTZsXkACBC+0cwF2GoLLoFXREDcDlkAojBICRaFLDCOQtQKjmsQSubtDFU/NXcDBHwkaw1cKQ8MiyEAIfkECQoAAAAsAAAAABAAEAAABVIgII5kaZ6AIJQCMRTFQKiDQx4GrBfGa4uCnAEhQuRgPwCBtwK+kCNFgjh6QlFYgGO7baJ2CxIioSDpwqNggWCGDVVGphly3BkOpXDrKfNm/4AhACH5BAkKAAAALAAAAAAQABAAAAVgICCOZGmeqEAMRTEQwskYbV0Yx7kYSIzQhtgoBxCKBDQCIOcoLBimRiFhSABYU5gIgW01pLUBYkRItAYAqrlhYiwKjiWAcDMWY8QjsCf4DewiBzQ2N1AmKlgvgCiMjSQhACH5BAkKAAAALAAAAAAQABAAAAVfICCOZGmeqEgUxUAIpkA0AMKyxkEiSZEIsJqhYAg+boUFSTAkiBiNHks3sg1ILAfBiS10gyqCg0UaFBCkwy3RYKiIYMAC+RAxiQgYsJdAjw5DN2gILzEEZgVcKYuMJiEAOwAAAAAAAAAAAA==);
+}
+
+/* Crosshair styles  */
+.chartjs-crosshair {
+	position: absolute;
+	top: 0px;
+	bottom: 0px;
+	border-left: 1px solid red;
+	pointer-events: none;
+}
+.chartjs-tracepoint {
+	position: absolute;
+	width: 4px;
+	height: 4px;
+	margin-left: -4px;
+	margin-top: -4px;
+	background-color: white;
+	border: 2px solid black;
+	border-radius: 6px;
+	z-index: 10;
+	pointer-events: none;
+}
+.chartjs-fasttooltip {
+	position: absolute;
+	background: rgba(0, 0, 0, .8);
+	z-index: 11;
+	padding: 5px;
+	color: white;
+	font-size: 12px;
+	pointer-events: none;
+	min-width: 140px;
+}
+.chartjs-zoombox {
+	position: absolute;
+	background:rgba(66, 133, 244, .2);
+	border: 1px solid #48F;
+	pointer-events: none;
+}
+.chartjs-zoombox-handle-horizontal div, .chartjs-zoombox-handle-vertical div {
+	display: none;
+}
+.chartjs-zoombox-handle-both div {
+	display: block;
+}
+.chartjs-zoombox-handle-both {
+	position: absolute;
+	left: 0px;
+	right: 0px;
+	top: 0px;
+	bottom: 0px;
+}
+.chartjs-zoombox-handle-corner-0::after, 
+.chartjs-zoombox-handle-corner-1::after,
+.chartjs-zoombox-handle-corner-2::after,
+.chartjs-zoombox-handle-corner-3::after {
+	content: "";
+	position: absolute;
+	width: 3px;
+	height: 20px;
+	background: rgba(66, 133, 244, 1);
+}
+.chartjs-zoombox-handle-corner-0::after { left: 0px;
+}
+.chartjs-zoombox-handle-corner-1::after { right: 0px;
+}
+.chartjs-zoombox-handle-corner-2::after { left: 0px; bottom: 0px;
+}
+.chartjs-zoombox-handle-corner-3::after { right: 0px; bottom: 0px;
+}
+.chartjs-zoombox-handle-corner-0::before,
+.chartjs-zoombox-handle-corner-1::before,
+.chartjs-zoombox-handle-corner-2::before,
+.chartjs-zoombox-handle-corner-3::before {
+	content: "";
+	position: absolute;
+	width: 20px;
+	height: 3px;
+	background: rgba(66, 133, 244, 1);
+}
+.chartjs-zoombox-handle-corner-0::before { left: 0px;
+}
+.chartjs-zoombox-handle-corner-1::before { right: 0px;
+}
+.chartjs-zoombox-handle-corner-2::before { left: 0px; bottom: 0px;
+}
+.chartjs-zoombox-handle-corner-3::before { right: 0px; bottom: 0px;
+}
+.chartjs-zoombox-handle-horizontal {
+	position: absolute;
+	left: 0px;
+	right: 0px;
+}
+.chartjs-zoombox-handle-horizontal::before {
+	position: absolute;
+	width: 4px;
+	height: 40px;
+	background: rgba(66, 133, 244, 1);
+	z-index: 999;
+	left: -2px;
+	top: -20px;
+	content: '';
+}
+.chartjs-zoombox-handle-horizontal::after {
+	position: absolute;
+	width: 4px;
+	height: 40px;
+	background: rgba(66, 133, 244, 1);
+	z-index: 999;
+	right: -2px;
+	z-index: 999;
+	top: -20px;
+	content: '';
+}
+.chartjs-zoombox-handle-vertical {
+	position: absolute;
+	top: 0px;
+	bottom: 0px;
+}
+.chartjs-zoombox-handle-vertical::before {
+	position: absolute;
+	width: 40px;
+	height: 4px;
+	background: rgba(66, 133, 244, 1);
+	z-index: 999;
+	top: -2px;
+	left: -20px;
+	content: '';
+}
+.chartjs-zoombox-handle-vertical::after {
+	position: absolute;
+	width: 40px;
+	height: 4px;
+	background: rgba(66, 133, 244, 1);
+	left: -20px;
+	z-index: 999;
+	bottom: -2px;
+	content: '';
+}
+.chartjs-fasttooltip .tooltip-title {
+	font-weight: bold;
+	display: block;
+}
+.chartjs-fasttooltip .tooltip-result {
+	display: block;
+}
+.chartjs-fasttooltip .tooltip-result-box {
+	display: inline-block;
+	width: 10px;
+	height: 10px;
+	margin-right: 5px;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -294,9 +684,6 @@ div.el-cascader-menus.el-popper {
     right: 10px !important;
 }
 }
-
-
-
 
 
 

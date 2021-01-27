@@ -90,7 +90,7 @@ export default {
     },
     clamp: {
       type: Boolean,
-      default: true
+      default: false
     }
   },
   data () {
@@ -184,17 +184,24 @@ export default {
 
       var path = this.pipath
 
-      if (this.interpolated) {
-        var response = await this.$pi.getInterpolated(path, this.$parent.chartStart, this.$parent.chartEnd, '300s')
-      } else if (this.summary) {
-        var response = await this.$pi.getSummary(path, this.$parent.chartStart, this.$parent.chartEnd, this.summaryInterval, 'Total')
-      } else if (this.recorded) {
-        var response = await this.$pi.getRecorded(path, this.$parent.chartStart, this.$parent.chartEnd)
-      } else {
-        var response = await this.$pi.getPlot(path, this.$parent.chartStart, this.$parent.chartEnd, 250)
+      try {  
+        if (this.interpolated) {
+          var response = await this.$pi.getInterpolated(path, this.$parent.chartStart, this.$parent.chartEnd, '300s')
+        } else if (this.summary) {
+          var response = await this.$pi.getSummary(path, this.$parent.chartStart, this.$parent.chartEnd, this.summaryInterval, 'Total')
+        } else if (this.recorded) {
+          var response = await this.$pi.getRecorded(path, this.$parent.chartStart, this.$parent.chartEnd)
+        } else {
+          var response = await this.$pi.getPlot(path, this.$parent.chartStart, this.$parent.chartEnd, 250)
+        }
+      }
+      catch (e) {
+        this.$parent.$emit('finish', this._uid, 'trend')
+        return
       }
 
       const seriesData = []
+
 
       for (var i = 0; i < response.length; i++) {
         var val = response[i].Value
