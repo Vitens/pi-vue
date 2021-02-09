@@ -289,7 +289,12 @@ export default {
         },
         legend: {
           display: this.legend !== 'none',
-          position: this.legend
+          position: this.legend,
+          labels: {
+           filter: function(legendItem, data) {
+              return legendItem.text != undefined
+           }
+      }
         },
         scales: {
           xAxes: [{
@@ -454,30 +459,29 @@ export default {
         if (this.userMax) { axis.ticks.max = this.userMax }
       }
 
-      // load thresholds
-      this.$options.chart.options.threshold = []
+
+      // load datasets and thresholds
+      this.$options.chart.data.datasets = []
+      
+      var thresholdOrder = 999
 
       for (var thresholdId in this.components.thresholds) {
         // copy threshold to non-watched object
-        var threshold = JSON.parse(JSON.stringify(this.components.thresholds[thresholdId]))
-        if (threshold.value > -9999 && threshold.value !== null) {
-          this.$options.chart.options.threshold.push(threshold)
-          if (threshold.setMax) {
-            var yscale = this.$options.chart.options.scales.yAxes[0]
+        var threshold = Object.assign({}, this.components.thresholds[thresholdId])
+        threshold.order = thresholdOrder
+        thresholdOrder+=1
+        this.$options.chart.data.datasets.push(threshold)
 
-            if (threshold.value > 1e6) {
-              var scalemax = Math.round(threshold.value / 1e6) * 1e6 + 5e5
-            } else {
-              var scalemax = Math.round(threshold.value / 1e5) * 1e5 + 5e4
-            }
+      }
 
-            yscale.ticks.suggestedMax = scalemax
-            // yscale.ticks.max = scalemax
-          }
-        }
+
+      for (var seriesId in this.components.series) {
+        var series = Object.assign({}, this.components.series[seriesId])
+        this.$options.chart.data.datasets.push(series)
       }
 
       this.$options.chart.data.datasets.sort((a, b) => a.order - b.order)
+
 
       this.loading = false
 

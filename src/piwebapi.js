@@ -263,11 +263,11 @@ export default {
           return promise
         },
 
-        getRecorded (path, start = '*-1d', end = '*', maxCount = 10000) {
+        getRecorded (path, start = '*-1d', end = '*', maxCount = 10000, boundaryType='inside') {
           var promise = new Promise(
         function (resolve, reject) {
           this.getWebId(path).then(response => {
-            var url = apiUrl + '/streams/' + response + '/recorded?startTime=' + this.convertTime(start) + '&endTime=' + this.convertTime(end) + '&maxCount=' + maxCount + '&webIDType=PathOnly'
+            var url = apiUrl + '/streams/' + response + '/recorded?startTime=' + this.convertTime(start) + '&endTime=' + this.convertTime(end) + '&maxCount=' + maxCount + '&boundaryType=' + boundaryType + '&webIDType=PathOnly'
             this.$http.get(url).then(response => {
               if ('Errors' in response.data) {
                 reject(response.data.Errors)

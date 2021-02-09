@@ -29,14 +29,14 @@ export default {
       type: Number,
       default: 1
     },
-    setMax: {
-      type: Boolean,
-      default: false
+    timeShift: {
+      type: Number,
+      default: 0
     }
   },
   data () {
     return {
-      tvalue: null
+      lineData: []
     }
   },
   computed: {
@@ -50,18 +50,30 @@ export default {
 
     data () {
       return {
-        type: 'threshold',
-        value: (this.value == undefined) ? this.tvalue * this.conversion : this.value * this.conversion,
-        path: this.path,
-        context: this.context,
-        color: this.color,
-        mode: this.mode,
+        type: 'scatter',
+        // value: (this.value == undefined) ? this.tvalue * this.conversion : this.value * this.conversion,
+        borderColor: this.color,
+        fill: false,
+        interpolate: false,
+        steppedLine: true,
+        order: 999,
+        threshold: this.mode,
+        showLine: true,
+        borderWidth: 1.5,
+        pointRadius: 0,
+        data: this.lineData,
         setMax: this.setMax
       }
     }
   },
   watch: {
     reloadTrigger () {
+      this.requestLoad()
+    },
+    '$parent.chartStart' () {
+      this.requestLoad()
+    },
+    '$parent.chartEnd' () {
       this.requestLoad()
     },
     data () {
@@ -88,14 +100,25 @@ export default {
     async loadData () {
       var value = this.value
       if (value == null) {
-        value = await this.$pi.getValue(this.$pi.parse(this.path, this.context))
-        if (value.Good) {
-          this.tvalue = value.Value
-        } else {
-          this.tvalue = undefined
+        var values = await this.$pi.getRecorded(this.$pi.parse(this.path, this.context), this.$parent.chartStart, this.$parent.chartEnd, 10000, 'interpolated')
+        this.lineData = []
+
+        var index = 0
+        for(var val of values) {
+          var x = (index > 0 && index < values.length) ? new Date(new Date(val.Timestamp).getTime() + this.timeShift) : new Date(val.Timestamp)
+          console.log(index, x, this.timeShift)
+          this.lineData.push({
+            x: x,
+            y: val.Value * this.conversion
+          })
+          index+=1
         }
+        
+
       } else {
-        this.tvalue = value
+        // single value
+        this.lineData = [{x: this.$pi.parseTime(this.$parent.chartStart), y: value * this.conversion},
+                         {x: this.$pi.parseTime(this.$parent.chartEnd), y: value * this.conversion}]
       }
     }
   }

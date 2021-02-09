@@ -91,7 +91,7 @@ export default {
     clamp: {
       type: Boolean,
       default: false
-    }
+    },
   },
   data () {
     return {
@@ -214,7 +214,7 @@ export default {
         }
 
         seriesData.push({
-          x: new Date(ts),
+          x: (new Date(ts)),
           y: val
         })
       }
