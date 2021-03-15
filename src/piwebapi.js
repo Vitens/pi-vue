@@ -263,7 +263,7 @@ export default {
           return promise
         },
 
-        getRecorded (path, start = '*-1d', end = '*', maxCount = 10000, boundaryType='inside') {
+        getRecorded (path, start = '*-1d', end = '*', maxCount = 10000, boundaryType = 'inside') {
           var promise = new Promise(
         function (resolve, reject) {
           this.getWebId(path).then(response => {
