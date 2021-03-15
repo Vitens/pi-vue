@@ -1,2 +1,5 @@
 node_modules/
 reports/
+dist/
+.yalc
+.DS_Store

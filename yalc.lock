@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "packages": {
+    "chartjs-plugin-crosshair": {
+      "signature": "f47172bc506620414d2b54512854cd6d"
+    },
+    "chartjs-plugin-threshold": {
+      "signature": "121489d5f5b70245d89f8fb7fc67d18f",
+      "replaced": "^1.0.7"
+    },
+    "chartjs-plugin-mobilezoom": {
+      "signature": "994bebf4280206a4c75ff153a384d7be"
+    }
+  }
+}

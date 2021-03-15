@@ -413,10 +413,10 @@ export default {
           return this.context
         },
 
-        getAttributeTree (path, categoryFilter = null) {
+        getAttributeTree (path, categoryFilter = null, searchFullHierarchy = true) {
           var promise = new Promise(async function (resolve, reject) {
             var webid = await this.getAttributeWebId(path)
-            var url = apiUrl + '/streamsets/' + webid + '/value?webIDType=PathOnly&searchFullHierarchy=true'
+            var url = apiUrl + '/streamsets/' + webid + '/value?webIDType=PathOnly&searchFullHierarchy=' + searchFullHierarchy
             if (categoryFilter) {
               url += '&categoryName=' + encodeURIComponent(categoryFilter)
             }
