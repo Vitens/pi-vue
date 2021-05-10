@@ -104,21 +104,19 @@ export default {
         this.lineData = []
 
         var index = 0
-        for(var val of values) {
+        for (var val of values) {
           var x = (index > 0 && index < values.length) ? new Date(new Date(val.Timestamp).getTime() + this.timeShift) : new Date(val.Timestamp)
           console.log(index, x, this.timeShift)
           this.lineData.push({
             x: x,
             y: val.Value * this.conversion
           })
-          index+=1
+          index += 1
         }
-        
-
       } else {
         // single value
-        this.lineData = [{x: this.$pi.parseTime(this.$parent.chartStart), y: value * this.conversion},
-                         {x: this.$pi.parseTime(this.$parent.chartEnd), y: value * this.conversion}]
+        this.lineData = [{ x: this.$pi.parseTime(this.$parent.chartStart), y: value * this.conversion },
+                         { x: this.$pi.parseTime(this.$parent.chartEnd), y: value * this.conversion }]
       }
     }
   }

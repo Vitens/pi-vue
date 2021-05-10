@@ -291,10 +291,10 @@ export default {
           display: this.legend !== 'none',
           position: this.legend,
           labels: {
-           filter: function(legendItem, data) {
+            filter: function (legendItem, data) {
               return legendItem.text != undefined
-           }
-      }
+            }
+          }
         },
         scales: {
           xAxes: [{
@@ -459,21 +459,18 @@ export default {
         if (this.userMax) { axis.ticks.max = this.userMax }
       }
 
-
       // load datasets and thresholds
       this.$options.chart.data.datasets = []
-      
+
       var thresholdOrder = 999
 
       for (var thresholdId in this.components.thresholds) {
         // copy threshold to non-watched object
         var threshold = Object.assign({}, this.components.thresholds[thresholdId])
         threshold.order = thresholdOrder
-        thresholdOrder+=1
+        thresholdOrder += 1
         this.$options.chart.data.datasets.push(threshold)
-
       }
-
 
       for (var seriesId in this.components.series) {
         var series = Object.assign({}, this.components.series[seriesId])
@@ -481,7 +478,6 @@ export default {
       }
 
       this.$options.chart.data.datasets.sort((a, b) => a.order - b.order)
-
 
       this.loading = false
 

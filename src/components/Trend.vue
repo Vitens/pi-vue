@@ -91,7 +91,7 @@ export default {
     clamp: {
       type: Boolean,
       default: false
-    },
+    }
   },
   data () {
     return {
