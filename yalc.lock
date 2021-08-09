@@ -1,0 +1,10 @@
+{
+  "version": "v1",
+  "packages": {
+    "chartjs-plugin-crosshair": {
+      "version": "2.0.0",
+      "signature": "b29d6b7e4fe17d204b7063394b4fbb35",
+      "file": true
+    }
+  }
+}
