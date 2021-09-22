@@ -123,6 +123,15 @@ export default function(app, options) {
         var response = await this.$http.get(url)
         return response.data.Items
       },
+      async getInterpolatedAtTimes (path, times=[]) {
+
+        var webid = this.getWebId(path)
+
+        var url = apiUrl + '/streams/' + webid + '/interpolatedattimes?time=' + times.join('&time=')
+        var response = await this.$http.get(url)
+
+        return response.data.Items
+      },
 
       async getSummary (path, start = '*-1d', end = '*', interval = '1h', summarytype = 'Average') {
 
@@ -133,6 +142,15 @@ export default function(app, options) {
         var response = await this.$http.get(url)
         return response.data.Items
 
+      },
+      async getRecordedAtTimes (path, times=[]) {
+
+        var webid = this.getWebId(path)
+
+        var url = apiUrl + '/streams/' + webid + '/recordedattimes?time=' + times.join('&time=')
+        var response = await this.$http.get(url)
+
+        return response.data.Items
       },
 
       async getRecorded (path, start = '*-1d', end = '*', maxCount = 10000, boundaryType = 'inside') {

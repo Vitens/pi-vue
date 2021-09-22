@@ -57,6 +57,10 @@ export default {
       type: Boolean,
       default: false
     },
+    atTimes: {
+      type: Array,
+      default: []
+    },
     summary: {
       type: Boolean,
       default: false
@@ -196,11 +200,20 @@ export default {
 
       try {
         if (this.interpolated) {
-          var response = await this.$pi.getInterpolated(path, this.$parent.chartStart, this.$parent.chartEnd, this.interpolationInterval)
+          if(this.atTimes.length == 0) {
+            var response = await this.$pi.getInterpolated(path, this.$parent.chartStart, this.$parent.chartEnd, this.interpolationInterval)
+          } else {
+            var response = await this.$pi.getInterpolatedAtTimes(path, this.atTimes)
+
+          }
         } else if (this.summary) {
           var response = await this.$pi.getSummary(path, this.$parent.chartStart, this.$parent.chartEnd, this.summaryInterval, 'Total')
         } else if (this.recorded) {
-          var response = await this.$pi.getRecorded(path, this.$parent.chartStart, this.$parent.chartEnd)
+          if(this.atTimes.length == 0) {
+            var response = await this.$pi.getRecorded(path, this.$parent.chartStart, this.$parent.chartEnd)
+          } else {
+            var response = await this.$pi.getRecordedAtTimes(path, this.atTimes)
+          }
         } else {
           var response = await this.$pi.getPlot(path, this.$parent.chartStart, this.$parent.chartEnd, 250)
         }
