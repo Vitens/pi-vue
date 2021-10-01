@@ -41,7 +41,7 @@ import moment from 'moment';
 // import 'chartjs-plugin-export'
 import 'chartjs-plugin-crosshair'
 import 'chartjs-plugin-threshold'
-// import 'chartjs-plugin-mobilezoom'
+import 'chartjs-plugin-mobilezoom'
 
 export default defineComponent({
   data () {
@@ -125,9 +125,9 @@ export default defineComponent({
 
   created () {
     // set request load debounce function
+    this.chartStart = this.start
+    this.chartEnd = this.end
     this.requestLoad = _.debounce(function () {
-      this.chartStart = this.start
-      this.chartEnd = this.end
       if (this.$chart) {
         if (this.$chart.tracer) {
           this.$chart.tracer.reset()
@@ -137,7 +137,7 @@ export default defineComponent({
     }, 300)
 
     this.requestMobileLoad = _.debounce(function () {
-
+      this.loadData(false)
     }, 1000)
   },
   watch: {
@@ -167,10 +167,12 @@ export default defineComponent({
     start (val) {
       this.$chart.options.scales.x.min = this.$pi.parseTime(val)
       this.$chart.update()
+      this.chartStart = val
       this.requestLoad()
     },
     end (val) {
       this.$chart.options.scales.x.max = this.$pi.parseTime(val)
+      this.chartEnd = val
       this.$chart.update()
       this.requestLoad()
     },
@@ -233,13 +235,14 @@ export default defineComponent({
           },
           mobilezoom: {
             callbacks: {
-              afterZoomPan: function (start, end) {
+              afterZoomPan: () => function (start, end) {
                 this.chartStart = start
                 this.chartEnd = end
-                this.requestMobileLoad()
-                // this.loadData(false)
+                this.$chart.options.scales.x.min = this.$pi.parseTime(start)
+                this.$chart.options.scales.x.max = this.$pi.parseTime(end)
+                this.$chart.update()
               }.bind(this),
-              doubleTap: function () {
+              doubleTap: () => function() {
                 this.toggleMobileFullScreen()
               }.bind(this)
             }
