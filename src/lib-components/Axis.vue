@@ -64,9 +64,9 @@ export default {
         type: 'axis',
         id: 'y-axis-' + this.uid,
         position: this.position,
-        scaleLabel: {
+        title: {
           display: this.label !== false,
-          labelString: this.label
+          text: this.label
         },
         stacked: this.stacked,
         grid: {
