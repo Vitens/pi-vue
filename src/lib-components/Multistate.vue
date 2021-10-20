@@ -34,8 +34,9 @@ export default {
     async load() {
       this.stateClass = ''
 
-      if(this.value == undefined) {
-        this.loading = true
+      this.loading = true
+
+      if(this.value === undefined && (this.path != '' || this.context != '')) {
         var path = this.$pi.parse(this.path, this.context)
         try {
           var value = await this.$pi.getValue(path)
@@ -52,10 +53,11 @@ export default {
         catch(e) {
           this.stateClass='error'
         }
+        this.loading = false
       } else {
         this.stateValue = this.value
+        if(this.stateValue != undefined) { this.loading = false }
       }
-      this.loading = false
 
       var value = this.stateValue
 

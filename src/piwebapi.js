@@ -177,6 +177,8 @@ export default function(app, options) {
         var webid = await this.getWebId(path)
         var url = apiUrl + '/streams/' + webid + '/value'
         var response = await this.$http.get(url)
+        if(response.status != 200) { throw TypeError("webid not found") }
+
         return response.data
       },
 
@@ -201,7 +203,7 @@ export default function(app, options) {
           }
           var req = this.requestAttributeValues()
           req()
-          if (Object.keys(this.valueBuffer).length >= 15) {
+          if (Object.keys(this.valueBuffer).length >= 17) {
             req.flush()
           }
         }.bind(this))
