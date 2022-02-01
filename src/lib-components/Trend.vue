@@ -49,6 +49,10 @@ export default {
       type: Boolean,
       default: true
     },
+    dash: {
+      type: Array,
+      default: []
+    },
     nothresh: {
       type: Boolean,
       default: false
@@ -125,6 +129,7 @@ export default {
         data: this.seriesData,
         fill: this.fill,
         borderWidth: this.width,
+        borderDash: this.borderDash,
         clip: this.markerSize,
         pointRadius: this.marker == 'none' ? 0 : this.markerSize,
         pointStyle: this.marker,
@@ -182,7 +187,6 @@ export default {
   },
   methods: {
     async loadData () {
-      this.$parent.setLoading(this.uid, 'trend')
 
       if (this.data !== null) {
         if (Promise.resolve(this.data) == this.data) {
@@ -190,7 +194,10 @@ export default {
         } else {
           this.seriesData = this.data
         }
+        return
       }
+
+      this.$parent.setLoading(this.uid, 'trend')
 
       // use a request token to check if we need to cancel this method as Promises cannot really be cancelled (yet)
       var requestToken = Math.random()
