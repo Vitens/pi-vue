@@ -84,6 +84,10 @@ export default {
       type: String,
       default: '300s'
     },
+    plotInterval: {
+      type: Number,
+      default: 250, 
+    },
     data: {
       type: [Array, Promise],
       default: null
@@ -222,7 +226,7 @@ export default {
             var response = await this.$pi.getRecordedAtTimes(path, this.atTimes)
           }
         } else {
-          var response = await this.$pi.getPlot(path, this.$parent.chartStart, this.$parent.chartEnd, 250)
+          var response = await this.$pi.getPlot(path, this.$parent.chartStart, this.$parent.chartEnd, this.plotInterval)
         }
       } catch (e) {
         this.$parent.setFinished(this.uid, 'trend')
