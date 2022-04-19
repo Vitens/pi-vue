@@ -269,12 +269,19 @@ export default function(app, options) {
         const response = await this.$http.get(url)
         var items = response.data.Items
 
-        var root = /\|(.+)/g.exec(path)[1]
+        let fullAttributePath = /\|(.+)/g.exec(path)[1]
+        let split = fullAttributePath.split("|")
+
+        var root = split.pop()
+
+        var attributeFilter = split.length > 0 ? split.join("|")+"|" : ""
 
         var flatmap = {}
         // create flatmap of all paths and values
         for (var item of items) {
-          flatmap[/\|(.*)/g.exec(item.Path)[1]] = item
+          let attributePath = /\|(.*)/g.exec(item.Path)[1]
+          let filteredPath = attributePath.replace(attributeFilter, "")
+          flatmap[filteredPath] = item
         }
         const keys = Object.keys(flatmap).sort()
 
