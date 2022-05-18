@@ -150,6 +150,7 @@ export default {
     reloadTrigger () {
       // props that trigger a dataset reload when mutated
       return {
+        data: this.data,
         path: this.pipath,
         recorded: this.recorded,
         interpolated: this.interpolated,
