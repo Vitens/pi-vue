@@ -330,6 +330,7 @@ export default function(app, options) {
         if (nameFilter !== null) {
           url += '&nameFilter=' + encodeURIComponent(nameFilter)
         }
+
         const response = await this.$http.get(url)
 
         var items = response.data.Items
