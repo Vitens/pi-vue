@@ -111,6 +111,10 @@ export default defineComponent({
     grid: {
       type: Boolean,
       default: true
+    },
+    timeUnit: {
+      type: String,
+      default: '',
     }
   },
   computed: {
@@ -312,7 +316,8 @@ export default defineComponent({
                 hour: 'HH:mm',
                 minute: 'HH:mm'
               },
-              tooltipFormat: 'dd. D MMM HH:mm:ss'
+              tooltipFormat: 'dd. D MMM HH:mm:ss',
+              unit: this.timeUnit
             },
             ticks: {
               major: {
