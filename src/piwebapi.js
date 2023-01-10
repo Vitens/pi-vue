@@ -312,7 +312,7 @@ export default function(app, options) {
         return this.getChildren(path, direct, templateFilter, categoryFilter, sortField, nameFilter)
       },
       async getChildren (path, direct = true, templateFilter = null, categoryFilter = null, sortField = null, nameFilter = null) {
-        var cachePath = path + '-children' + direct + templateFilter
+        var cachePath = path + '-children' + direct + templateFilter + categoryFilter
         if (cachePath in this.valueCache) {
           return this.valueCache[cachePath]
         }
