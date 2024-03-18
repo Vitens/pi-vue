@@ -1,6 +1,6 @@
 <template>
   <span class='value'>
-    <span v-if='loading' class='el-icon-loading'></span>
+    <span v-if='loading'><el-icon class="is-loading"><Loading /></el-icon></span>
     <span v-show="error != ''" class='error'>...</span>
     <span v-if='!loading'>{{formattedValue}}</span>
     <span v-if="units != ''" class='units'>{{displayUnits}}</span>

@@ -40,7 +40,7 @@ export default {
     },
     fontColor: {
       type: String,
-      default: '#333'
+      default: 'auto'
     },
     grid: {
       type: Boolean,
@@ -70,14 +70,15 @@ export default {
         },
         stacked: this.stacked,
         grid: {
-          display: this.grid
+          display: this.grid,
+          color: function() { document.querySelector('html').classList.contains('dark') ? '#666' : '#EEE' }
         },
         min: this.min,
         max: this.max,
         suggestedMin: this.suggestedMin,
         suggestedMax: this.suggestedMax,
         ticks: {
-          color: this.fontColor
+          color: function() { return this.fontColor == 'auto' ? this.defaultfontColor() : this.fontColor }.bind(this)
         }
       }
     }
@@ -99,6 +100,14 @@ export default {
     this.$parent.deleteData(this.uid, this.data, 'axis')
   },
   methods: {
+    gridColor() {
+      return document.querySelector('html').classList.contains('dark') ? '#666' : '#EEE'
+    },
+
+    defaultfontColor() {
+      return document.querySelector('html').classList.contains('dark') ? '#EEE' : '#333'
+    },
+
     deleteData(uid, data, type) {
       this.$parent.deleteData(uid, data, type)
     },

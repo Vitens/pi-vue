@@ -106,7 +106,7 @@ export default defineComponent({
     },
     fontColor: {
       type: String,
-      default: '#333'
+      default: 'auto'
     },
     grid: {
       type: Boolean,
@@ -123,7 +123,7 @@ export default defineComponent({
     },
     showReset () {
       return (this.userMin !== undefined) || (this.userMin !== undefined)
-    }
+    },
 
   },
 
@@ -213,6 +213,16 @@ export default defineComponent({
     this.chartStart = this.start
     this.chartEnd = this.end
 
+    let html = document.querySelector('html')
+    this.$options.observer = new MutationObserver(function() {
+      console.log('toggle dark mode')
+      this.$nextTick().then(() => {
+        this.$chart.update()
+      })
+    }.bind(this))
+
+    this.$options.observer.observe(html, {attributes: true, attributeFilter: ['class']})
+
     var options = {
       type: this.type,
       // plugins: [legendPlugin],
@@ -226,12 +236,14 @@ export default defineComponent({
         plugins: {
           title: {
             display: this.title !== '',
-            text: this.title
+            text: this.title,
+            color: () => this.defaultfontColor()
           },
           legend: {
             display: this.legend !== 'none',
             position: this.legend,
             labels: {
+              color: () => this.defaultfontColor(),
               filter: function (legendItem, data) {
                 return legendItem.text != undefined
               }
@@ -309,7 +321,8 @@ export default defineComponent({
             stacked: this.stacked,
             type: 'time',
             grid: {
-              display: this.grid
+              display: this.grid,
+              color: () => this.gridColor()
             },
             time: {
               displayFormats: {
@@ -328,7 +341,7 @@ export default defineComponent({
                   return {weight: 'bold'}
                 }
               },
-              color: this.fontColor,
+              color: function() { return this.fontColor != 'auto' ? this.fontColor : this.defaultfontColor() }.bind(this),
               autoSkip: true,
               autoSkipPadding: 15,
               maxRotation: 0
@@ -362,7 +375,12 @@ export default defineComponent({
   },
 
   methods: {
-
+    defaultfontColor() {
+      return document.querySelector('html').classList.contains('dark') ? '#EEE' : '#333'
+    },
+    gridColor() {
+      return document.querySelector('html').classList.contains('dark') ? '#666' : '#EEE'
+    },
     toggleMobileFullScreen () {
       if (this.isFullscreen) {
         this.$refs.container.style.height = this.$options.height + 'px'
@@ -409,6 +427,7 @@ export default defineComponent({
       } else {
         delete this.components.axis[uid]
       }
+      console.log(this.components)
       this.requestLoad()
     },
 
@@ -431,6 +450,7 @@ export default defineComponent({
       // load datasets
       this.$chart.data.datasets = []
 
+
       var lowestY = 1e99
       var highestY = -1e99
 
@@ -448,6 +468,12 @@ export default defineComponent({
         }
       }
 
+      // filter out all scales not called 'x'
+      for(var scale in this.$chart.options.scales) {
+        if (scale != 'x') {
+          delete this.$chart.options.scales[scale]
+        }
+      }
 
       for (var axisId in this.components.axis) {
         // wierd but necessary?
@@ -506,13 +532,18 @@ export default defineComponent({
 </script>
 <style>
 .pi-chart {
-  background: #FFF;
+  background: transparent;
   border: 1px solid #AAA;
   border-radius: 2px;
   position: relative;
   touch-action: pan-y;
   cursor: crosshair;
 }
+html.dark .pi-chart {
+  background: #111;
+  border: 1px solid #444;
+}
+
 .pi-chart-reset-zoom {
   position: absolute;
   width: 16px;
@@ -542,6 +573,9 @@ export default defineComponent({
   right: 0px;
   top: 0px;
   bottom: 0px;
+}
+html.dark .pi-chart .pi-loading {
+  background-color: rgba(0,0,0,0.9);
 }
 
 .pi-chart .chart-options {
