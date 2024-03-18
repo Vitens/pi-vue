@@ -477,7 +477,9 @@ export default defineComponent({
 
       for (var axisId in this.components.axis) {
         // wierd but necessary?
-        var axis = JSON.parse(JSON.stringify(this.components.axis[axisId]))
+        // var axis = JSON.parse(JSON.stringify(this.components.axis[axisId]))
+        var axis = this.components.axis[axisId]
+        console.log('hello world!')
         axis.type = 'linear'
         this.$chart.options.scales[axis.id] = axis
 
@@ -540,7 +542,7 @@ export default defineComponent({
   cursor: crosshair;
 }
 html.dark .pi-chart {
-  background: #111;
+  background: #222;
   border: 1px solid #444;
 }
 

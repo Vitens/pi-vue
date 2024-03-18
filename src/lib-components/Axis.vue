@@ -60,6 +60,7 @@ export default {
     },
 
     data () {
+      console.log('data')
       return {
         type: 'axis',
         id: 'y-axis-' + this.uid,
@@ -71,7 +72,11 @@ export default {
         stacked: this.stacked,
         grid: {
           display: this.grid,
-          color: function() { document.querySelector('html').classList.contains('dark') ? '#666' : '#EEE' }
+          color: function() { return document.querySelector('html').classList.contains('dark') ? '#666' : '#EEE' },
+          borderColor: function() {
+            return document.querySelector('html').classList.contains('dark') ? '#666' : '#EEE'
+          }
+          // color: 'red'
         },
         min: this.min,
         max: this.max,
