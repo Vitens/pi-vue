@@ -18,6 +18,10 @@ export default {
       type: [String, Boolean],
       default: false
     },
+    tickLabels: {
+      type: Array,
+      default: []
+    },
     min: {
       type: Number,
       default: undefined
@@ -60,9 +64,8 @@ export default {
     },
 
     data () {
-      console.log('data')
-      return {
-        type: 'axis',
+
+      var options = {
         id: 'y-axis-' + this.uid,
         position: this.position,
         title: {
@@ -83,10 +86,25 @@ export default {
         suggestedMin: this.suggestedMin,
         suggestedMax: this.suggestedMax,
         ticks: {
-          color: function() { return this.fontColor == 'auto' ? this.defaultfontColor() : this.fontColor }.bind(this)
+          color: function() { return this.fontColor == 'auto' ? this.defaultfontColor() : this.fontColor }.bind(this),
         }
       }
+
+      if (this.tickLabels.length > 0) {
+        options.ticks.stepSize = 1
+        options.ticks.callback = function(value, index, values) {
+          // find value in tickLabels
+          var label = this.tickLabels.find(function(tick) {
+            return tick.value == value
+          })
+          return label ? label.label : ''
+        }.bind(this)
+      }
+
+
+      return options
     }
+
   },
   watch: {
     data () {

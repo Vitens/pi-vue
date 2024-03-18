@@ -244,8 +244,9 @@ export default {
           if (val.IsSystem) {
             continue
           }
-          val = val.Value * 24
-          ts = response[i].Value.Timestamp
+          // val = val.Value * 24
+          // ts = response[i].Value.Timestamp
+          val = val.Value
         }
 
         seriesData.push({
