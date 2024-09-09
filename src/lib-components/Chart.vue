@@ -33,6 +33,7 @@
 import { defineComponent } from 'vue';
 
 import Chart from 'chart.js/auto'
+import { getRelativePosition } from 'chart.js/helpers';
 import 'chartjs-adapter-moment';
 
 import _ from 'lodash';
@@ -72,6 +73,10 @@ export default defineComponent({
       type: [String, Number, Object],
       default: '*'
     },
+    refresh: {
+      type: Number,
+      default: 0
+    },
     responsive: {
       type: Boolean,
       default: true
@@ -87,6 +92,10 @@ export default defineComponent({
     title: {
       type: String,
       default: ''
+    },
+    click: {
+      type: Function,
+      default(x) { return }
     },
     yLabel: {
       type: String,
@@ -143,6 +152,7 @@ export default defineComponent({
     this.requestMobileLoad = _.debounce(function () {
       this.loadData(false)
     }, 1000)
+
   },
   watch: {
     controlsVisible (val) {
@@ -228,6 +238,13 @@ export default defineComponent({
       // plugins: [legendPlugin],
 
       options: {
+        onClick: function(e) {
+          if(this.type != 'bar') { return }
+          const elem = this.$chart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, false)
+          if(elem.length) {
+            this.click(elem[0].element.$context.parsed.x)
+          }
+        }.bind(this),
         parsing: false,
         layout: {
           padding: {left: 5}
@@ -368,13 +385,28 @@ export default defineComponent({
     var ctx = this.$refs.canvas
     this.$chart = new Chart(ctx, options)
     this.nuid = this.uid
+    // set refresh
+    if (this.refresh > 0) {
+      this.interval = setInterval(this.doRefresh, this.refresh * 1000)
+    }
+
   },
   beforeUnmount () {
     // cleanup chart
     this.$chart.destroy()
+    // unset interval
+    if (this.interval) {
+      clearInterval(this.interval)
+    }
   },
 
   methods: {
+    doRefresh() {
+      // only refresh if start or end is string and starts with *
+      if (typeof this.start === 'string' && this.start.startsWith('*')) {
+        this.requestLoad()
+      }
+    },
     defaultfontColor() {
       return document.querySelector('html').classList.contains('dark') ? '#EEE' : '#333'
     },

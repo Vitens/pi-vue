@@ -69,12 +69,17 @@ export default {
       type: Boolean,
       default: false
     },
+    conversion: {
+      type: Number,
+      default: 1
+    },
     summaryInterval: {
       type: String,
       default: '1 month'
     },
     summaryType: {
-      default: 'total'
+      type: String,
+      default: 'Total'
     },
     interpolated: {
       type: Boolean,
@@ -219,7 +224,7 @@ export default {
 
           }
         } else if (this.summary) {
-          var response = await this.$pi.getSummary(path, this.$parent.chartStart, this.$parent.chartEnd, this.summaryInterval, 'Total')
+          var response = await this.$pi.getSummary(path, this.$parent.chartStart, this.$parent.chartEnd, this.summaryInterval, this.summaryType)
         } else if (this.recorded) {
           if(this.atTimes.length == 0) {
             var response = await this.$pi.getRecorded(path, this.$parent.chartStart, this.$parent.chartEnd)
@@ -244,14 +249,16 @@ export default {
           if (val.IsSystem) {
             continue
           }
-          // val = val.Value * 24
-          // ts = response[i].Value.Timestamp
+
+          if (val.Timestamp) {
+            ts = val.Timestamp
+          }
           val = val.Value
         }
 
         seriesData.push({
           x: (new Date(ts)),
-          y: val
+          y: val * this.conversion
         })
       }
 

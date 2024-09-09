@@ -137,7 +137,10 @@ export default function(app, options) {
 
         var webid = this.getWebId(path)
 
-        var url = apiUrl + '/streams/' + webid + '/summary?startTime=' + this.convertTime(start) + '&endTime=' + this.convertTime(end) + '&summaryDuration=' + interval + '&summaryType=' + summarytype + '&webIDType=PathOnly&filterExpression=' + "'.'<10000"
+        var timetype = (summarytype == 'Total') ? 'Auto' : 'EarliestTime'
+
+        // var url = apiUrl + '/streams/' + webid + '/summary?startTime=' + this.convertTime(start) + '&endTime=' + this.convertTime(end) + '&summaryDuration=' + interval + '&summaryType=' + summarytype + '&webIDType=PathOnly&filterExpression=' + "%27.%27%3C10000"
+        var url = apiUrl + '/streams/' + webid + '/summary?startTime=' + this.convertTime(start) + '&endTime=' + this.convertTime(end) + '&summaryDuration=' + interval + '&summaryType=' + summarytype + '&webIDType=PathOnly&timeType=' + timetype
 
         var response = await this.$http.get(url)
         return response.data.Items
@@ -317,7 +320,7 @@ export default function(app, options) {
           return this.valueCache[cachePath]
         }
         const webid = this.getWebId(path)
-        var url = apiUrl + '/elements/' + webid + '/elements?selectedFields=Items.WebId;Items.Name;Items.TemplateName;Items.Path;Items.HasChildren;Items.Description;Items.ExtendedProperties' + '&webIDType=PathOnly'
+        var url = apiUrl + '/elements/' + webid + '/elements?selectedFields=Items.WebId%3BItems.Name%3BItems.TemplateName%3BItems.Path%3BItems.HasChildren%3BItems.Description%3BItems.ExtendedProperties' + '&webIDType=PathOnly'
         if (!direct) {
           url += '&searchFullHierarchy=true'
         }
@@ -350,12 +353,12 @@ export default function(app, options) {
         }
         if (this._.includes(path, '|')) {
           const webid = this.getWebId(path)
-          const url = apiUrl + '/attributes/' + webid + '/attributes?selectedFields=Items.WebId;Items.Name;Items.TemplateName;Items.Path;Items.HasChildren;' + fields + '&webIDType=PathOnly'
+          const url = apiUrl + '/attributes/' + webid + '/attributes?selectedFields=Items.WebId%3BItems.Name%3BItems.TemplateName%3BItems.Path%3BItems.HasChildren%3B' + fields + '&webIDType=PathOnly'
           const response = await this.$http.get(url)
           return response.data.Items
         } else {
           const webid = this.getWebId(path)
-          const url = apiUrl + '/elements/' + webid + '/attributes?selectedFields=Items.WebId;Items.Name;Items.TemplateName;Items.Path;Items.HasChildren;' + fields + '&webIDType=PathOnly'
+          const url = apiUrl + '/elements/' + webid + '/attributes?selectedFields=Items.WebId%3BItems.Name%3BItems.TemplateName%3BItems.Path%3BItems.HasChildren%3B' + fields + '&webIDType=PathOnly'
           const response = await this.$http.get(url)
           this.valueCache[cachePath] = response.data.Items
           return response.data.Items

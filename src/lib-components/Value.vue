@@ -18,7 +18,8 @@ export default {
     conversion: { default: 1, type: Number },
     locale: { default: false, type: Boolean },
     nobatch: { default: false, type: Boolean },
-    static: Boolean
+    static: Boolean,
+    refresh: { default: 0, type: Number}
   },
   data () {
     return {
@@ -26,11 +27,21 @@ export default {
       loading: true,
       value: {
         Value: ''
-      }
+      },
+      interval: undefined
     }
   },
   async mounted() {
     await this.load()
+    if (this.refresh > 0) {
+      this.interval = setInterval(this.load, this.refresh*1000)
+    }
+  },
+  beforeUnmount() {
+    // unset interval
+    if (this.interval) {
+      clearInterval(this.interval)
+    }
   },
   methods: {
     async load() {
